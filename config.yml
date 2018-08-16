@@ -1,0 +1,66 @@
+#configureation file for holding runtime configurations and parameters
+
+#Pipeline execution
+exec:
+  outdir: 'sniffle_files'
+  trim: True
+  map: True
+  callSNPs: True
+  annotateAAChanges: True
+  denovoAssembly: True
+  denovoAssembleMappedReads: True
+  runPopoolation: True
+
+  #data cleaning
+  #coverage depth normalization with bbnorm and duplicate read removal with picard;
+  #these will be implemented upstream of variant calling, such that variant calling
+  #will use the de-duplicated or normalized sam/bam file
+  removeDupReads: True
+  # using bbnorm from the bbmap software package,
+  #normalize coverage across the sam or bam file to a set coverage depth
+  normalizeCoverage: True
+  coverageNormDepth: 1000
+
+  #Popoolation
+  calcGenewisepi: True
+  calcGenewisepiNpiS: True
+  calcSlidingWindowpiNpiS: True
+
+  #subsampled poppoolation
+  performSubsample: False
+  subsamplepi: False
+  subsamplepiNpiS: False
+  subsampleSlidingWindowpiNpiS: False
+
+  #Reference sequence for mapping
+  referenceSequence: "A_HongKong_4801_2014.fasta"
+
+#Trimming
+trimmomatic:
+  removeAdapters: False
+  adaptersPath: "lib/trimmomatic/adapters/Nextera_XT_adapter.fa"
+  #paired end reads
+  paired: True
+  #post trimming length
+  minlength: 100
+  #sliding window size
+  windowSize: 5
+  #quality threashold for trim in sliding window
+  qscore: 20
+
+snpcalling:
+  lofreq: False
+  varscan: True
+  minCoverage: 100
+  snpQualityThreshold: 30
+  snpFrequency: 0.01
+
+poppoolation:
+  subsampleLevel: 1000
+  minCount: 1
+  minCoverage: 100
+  maxCoverage: 1000000
+  minQuality: 0
+
+  piWindowSize: 9
+  piStepSize: 3
