@@ -62,11 +62,11 @@ install-lofreq:
 	mv $(TMPDIR)/lofreq_star-2.1.3.1/bin/* lib/bin/
 
 install-samtools:
-	curl -L 'https://downloads.sourceforge.net/project/samtools/samtools/1.1/samtools-1.1.tar.bz2' -o $(TMPDIR)/samtools-1.1.tar.bz2
-	cd $(TMPDIR); tar jxvf samtools-1.1.tar.bz2
-	cd $(TMPDIR)/samtools-1.1/htslib-1.1; make; make prefix=../../lib/ install
-	cd $(TMPDIR)/samtools-1.1; ./configure;\
-	 make DFLAGS="-D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE -D_CURSES_LIB=0" LIBCURSES="";\
+	curl -L 'https://downloads.sourceforge.net/project/samtools/samtools/1.9/samtools-1.9.tar.bz2' -o $(TMPDIR)/samtools-1.9.tar.bz2
+	cd $(TMPDIR); tar jxvf samtools-1.9.tar.bz2
+	cd $(TMPDIR)/samtools-1.9/htslib-1.9; make; make prefix=../../lib/ install
+	cd $(TMPDIR)/samtools-1.9; ./configure;\
+	 #make DFLAGS="-D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE -D_CURSES_LIB=0" LIBCURSES="";\
 	 make prefix=../../lib/ install
 
 install-trinity:
