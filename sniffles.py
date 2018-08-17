@@ -8,6 +8,7 @@ import os
 import multiprocessing as mp
 from trim import trimmomatic
 from mapping import mapping
+import readcleaning as rc
 
 #determine command line arguments and get path
 parser = argparse.ArgumentParser(description='Pipeline to examine SNPs from raw illumina reads')
@@ -88,3 +89,7 @@ pool.starmap(trimmomatic,[[libPath,cfg,i[0],i[1],i[2]] for i in r.retList()])
 
 #begin mapping
 mapping(libPath,cfg,numThreads,r.idList)
+
+#datacleaning
+if cfg['exec']['removeDupReads']:
+    rc.removeDuplicates(libPath,cfg,numThreads,r.idList)
