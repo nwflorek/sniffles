@@ -1,6 +1,7 @@
 import subprocess as sub
 import os
 import shlex
+from mapping import mapping
 
 def removeDuplicates(libpath,runCFG,threads,ids):
     for id in ids:
@@ -25,5 +26,23 @@ def removeDuplicates(libpath,runCFG,threads,ids):
         os.remove(runCFG['exec']['outdir']+'/'+'{id}.sam'.format(id=id))
 
 def normCoverage(libpath,runCFG,threads,ids):
-    #get reads from samfile
+
     for id in ids:
+        #determine which samfile to use if duplicates have been removed
+        if runCFG['exec']['removeDupReads']:
+            samfile = '{id}_nodups.sam'.format(id=id)
+        else:
+            samfile = '{id}.sam'.format(id=id)
+
+        #get reads from samfile
+        cmd = '{libpath}/bbmap/reformat.sh in={samfile} out={id}_adjusted.fastq'.format(libpath=libpath,samfile=samfile,id=id)
+        cmd = shlex.split(cmd)
+        sub.Popen(cmd,cwd=runCFG['exec']['outdir']).wait()
+
+        #run bbnorm
+        cmd = '{libpath}/bbmap/bbnorm.sh in={id}_adjusted.fastq out={id}_normalized.fastq target={depth}'.format(libpath=libpath,id=id,depth=runCFG['exec']['coverageNormDepth'])
+        cmd = shlex.split(cmd)
+        sub.Popen(cmd,cwd=runCFG['exec']['outdir']).wait()
+        os.remove('{path}/{id}_adjusted.fastq'.format(path=runCFG['exec']['outdir'],id=id))
+
+        mapping(libpath,runCFG,threads,ids,True)

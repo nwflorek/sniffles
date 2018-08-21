@@ -93,3 +93,12 @@ mapping(libPath,cfg,numThreads,r.idList)
 #datacleaning
 if cfg['exec']['removeDupReads']:
     rc.removeDuplicates(libPath,cfg,numThreads,r.idList)
+
+#normalize coverage
+if cfg['exec']['normalizeCoverage']:
+    rc.normCoverage(libPath,cfg,numThreads,r.idList)
+
+#call snps
+if cfg['exec']['callSNPs']:
+    #add function to call snps
+    pass
