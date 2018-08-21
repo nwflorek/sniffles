@@ -5,10 +5,12 @@
 import yaml
 import argparse
 import os
+from shutil import copyfile
 import multiprocessing as mp
 from trim import trimmomatic
 from mapping import mapping
 import readcleaning as rc
+from snpcaller import snpcaller
 
 #determine command line arguments and get path
 parser = argparse.ArgumentParser(description='Pipeline to examine SNPs from raw illumina reads')
@@ -41,6 +43,9 @@ try:
 except FileExistsError:
     print('Please remove the files generated from the previous run or rename the output file.')
     exit()
+
+#copy reference to outdir
+copyfile(cfg['exec']['referenceSequence'],os.path.join(outDir,cfg['exec']['outdir'])+'/'+cfg['exec']['referenceSequence'])
 
 #class for containing read information
 class reads:
@@ -100,5 +105,4 @@ if cfg['exec']['normalizeCoverage']:
 
 #call snps
 if cfg['exec']['callSNPs']:
-    #add function to call snps
-    pass
+    snpcaller(libPath,cfg,numThreads,r.idList)

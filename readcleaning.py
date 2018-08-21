@@ -45,4 +45,4 @@ def normCoverage(libpath,runCFG,threads,ids):
         sub.Popen(cmd,cwd=runCFG['exec']['outdir']).wait()
         os.remove('{path}/{id}_adjusted.fastq'.format(path=runCFG['exec']['outdir'],id=id))
 
-        mapping(libpath,runCFG,threads,ids,True)
+    mapping(libpath,runCFG,threads,ids,True)
