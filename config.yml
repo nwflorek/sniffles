@@ -5,7 +5,8 @@ exec:
   outdir: 'sniffle_files'
   trim: True
   map: True
-  callSNPs: True
+  callSNPs: False
+  generateConsensus: True
   annotateAAChanges: True
   denovoAssembly: True
   denovoAssembleMappedReads: True

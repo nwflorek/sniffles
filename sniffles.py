@@ -9,6 +9,7 @@ from shutil import copyfile
 import multiprocessing as mp
 from trim import trimmomatic
 from mapping import mapping
+from consensus import consensus
 import readcleaning as rc
 from snpcaller import snpcaller
 
@@ -102,6 +103,10 @@ if cfg['exec']['removeDupReads']:
 #normalize coverage
 if cfg['exec']['normalizeCoverage']:
     rc.normCoverage(libPath,cfg,numThreads,r.idList)
+
+#generate consensus
+if cfg['exec']['generateConsensus']:
+    consensus(libPath,cfg,numThreads,r.idList)
 
 #call snps
 if cfg['exec']['callSNPs']:
