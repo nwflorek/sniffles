@@ -17,7 +17,7 @@ install: install-prerequisites
 	@echo "Installation complete!"
 
 ##TODO add checking to see if these programs exist on the filesystem already
-install-prerequisites: install-mkdir install-picard install-snpeff install-trimmomatic install-varscan \
+install-prerequisites: install-mkdir install-picard install-snpeff install-vcftools install-trimmomatic install-varscan \
 	install-samtools install-bowtie2 install-samtools install-lofreq install-trinity install-bbmap \
 	install-blast install-popoolation cleanup
 	@echo "Done installing the prerequisites."
@@ -95,5 +95,11 @@ install-popoolation:
 	unzip $(TMPDIR)/popoolation_1.2.2.zip -d $(TMPDIR)
 	mv $(TMPDIR)/popoolation_1.2.2 lib/poppoolation
 
+install-vcftools:
+	curl -L 'https://downloads.sourceforge.net/project/vcftools/vcftools_0.1.13.tar.gz' -o $(TMPDIR)/vcftools_0.1.13.tar.gz
+	tar -xzf $(TMPDIR)vcftools_0.1.13.tar.gz -C $(TMPDIR)
+	cd $(TMPDIR)/vcftools_0.1.13; make
+	mv $(TMPDIR)/vcftools_0.1.13/bin/* lib/bin/
+	
 cleanup:
 	rm -r build
