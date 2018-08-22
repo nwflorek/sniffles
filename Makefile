@@ -17,13 +17,13 @@ install: install-prerequisites
 	@echo "Installation complete!"
 
 ##TODO add checking to see if these programs exist on the filesystem already
-install-prerequisites: install-mkdir install-picard install-snpeff install-vcftools install-trimmomatic install-varscan \
+install-prerequisites: install-mkdir install-vcftools install-picard install-snpeff install-trimmomatic install-varscan \
 	install-samtools install-bowtie2 install-samtools install-lofreq install-trinity install-bbmap \
 	install-blast install-popoolation cleanup
 	@echo "Done installing the prerequisites."
 
 install-mkdir:
-	-mkdir build lib
+	-mkdir build lib lib/bin
 
 install-picard:
 	mkdir lib/picard
@@ -49,7 +49,7 @@ install-varscan:
 install-bowtie2:
 	curl -L 'https://downloads.sourceforge.net/project/bowtie-bio/bowtie2/2.3.4.1/bowtie2-2.3.4.1-source.zip' -o $(TMPDIR)/bowtie2.3.4.1-source.zip
 	unzip $(TMPDIR)/bowtie2.3.4.1-source.zip -d $(TMPDIR)
-	cd $(TMPDIR)/bowtie2-2.3.4.1; make NO_TBB=1; make prefix=../../lib/ install
+	cd $(TMPDIR)/bowtie2-2.3.4.1; $(MAKE) NO_TBB=1; $(MAKE) prefix=../../lib/ install
 
 install-lofreq:
 	@if [ "$(OS)" = "Linux" ]; then\
@@ -64,15 +64,15 @@ install-lofreq:
 install-samtools:
 	curl -L 'https://downloads.sourceforge.net/project/samtools/samtools/1.9/samtools-1.9.tar.bz2' -o $(TMPDIR)/samtools-1.9.tar.bz2
 	cd $(TMPDIR); tar jxvf samtools-1.9.tar.bz2
-	cd $(TMPDIR)/samtools-1.9/htslib-1.9; make; make prefix=../../lib/ install
+	cd $(TMPDIR)/samtools-1.9/htslib-1.9; $(MAKE); $(MAKE) prefix=../../lib/ install
 	cd $(TMPDIR)/samtools-1.9; ./configure;\
 	 #make DFLAGS="-D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE -D_CURSES_LIB=0" LIBCURSES="";\
-	 make prefix=../../lib/ install
+	 $(MAKE) prefix=../../lib/ install
 
 install-trinity:
 	curl -L 'https://github.com/trinityrnaseq/trinityrnaseq/archive/Trinity-v2.6.6.tar.gz' -o $(TMPDIR)/Trinity-v2.6.6.tar.gz
 	tar -xzf $(TMPDIR)/Trinity-v2.6.6.tar.gz -C $(TMPDIR)
-	cd $(TMPDIR)/trinityrnaseq-Trinity-v2.6.6; make; make plugins
+	cd $(TMPDIR)/trinityrnaseq-Trinity-v2.6.6; $(MAKE); $(MAKE) plugins
 	mv $(TMPDIR)/trinityrnaseq-Trinity-v2.6.6/ lib/trinity-2.6.6/
 
 install-bbmap:
@@ -96,10 +96,11 @@ install-popoolation:
 	mv $(TMPDIR)/popoolation_1.2.2 lib/poppoolation
 
 install-vcftools:
-	curl -L 'https://downloads.sourceforge.net/project/vcftools/vcftools_0.1.13.tar.gz' -o $(TMPDIR)/vcftools_0.1.13.tar.gz
-	tar -xzf $(TMPDIR)vcftools_0.1.13.tar.gz -C $(TMPDIR)
-	cd $(TMPDIR)/vcftools_0.1.13; make
-	mv $(TMPDIR)/vcftools_0.1.13/bin/* lib/bin/
-	
+	curl -L 'https://github.com/vcftools/vcftools/releases/download/v0.1.16/vcftools-0.1.16.tar.gz' -o $(TMPDIR)/vcftools.tar.gz
+	tar -xzf $(TMPDIR)/vcftools.tar.gz -C $(TMPDIR)
+	cd $(TMPDIR)/vcftools-0.1.16; ./configure --prefix=$(PWD)/lib
+	$(MAKE) -C $(TMPDIR)/vcftools-0.1.16
+	$(MAKE) -C $(TMPDIR)/vcftools-0.1.16 install
+
 cleanup:
 	rm -r build
