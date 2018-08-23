@@ -68,6 +68,8 @@ install-samtools:
 	cd $(TMPDIR)/samtools-1.9; ./configure;\
 	 #make DFLAGS="-D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE -D_CURSES_LIB=0" LIBCURSES="";\
 	 $(MAKE) prefix=../../lib/ install
+	cp $(TMPDIR)/samtools-1.9/htslib-1.9/bgzip lib/bin/bgzip
+	cp $(TMPDIR)/samtools-1.9/htslib-1.9/tabix lib/bin/tabix
 
 install-trinity:
 	curl -L 'https://github.com/trinityrnaseq/trinityrnaseq/archive/Trinity-v2.6.6.tar.gz' -o $(TMPDIR)/Trinity-v2.6.6.tar.gz
