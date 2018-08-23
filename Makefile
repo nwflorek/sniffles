@@ -17,7 +17,7 @@ install: install-prerequisites
 	@echo "Installation complete!"
 
 ##TODO add checking to see if these programs exist on the filesystem already
-install-prerequisites: install-mkdir install-vcftools install-picard install-snpeff install-trimmomatic install-varscan \
+install-prerequisites: install-mkdir install-bcftools install-picard install-snpeff install-trimmomatic install-varscan \
 	install-samtools install-bowtie2 install-samtools install-lofreq install-trinity install-bbmap \
 	install-blast install-popoolation cleanup
 	@echo "Done installing the prerequisites."
@@ -62,14 +62,18 @@ install-lofreq:
 	mv $(TMPDIR)/lofreq_star-2.1.3.1/bin/* lib/bin/
 
 install-samtools:
-	curl -L 'https://downloads.sourceforge.net/project/samtools/samtools/1.9/samtools-1.9.tar.bz2' -o $(TMPDIR)/samtools-1.9.tar.bz2
+	curl -L 'https://github.com/samtools/samtools/releases/download/1.9/samtools-1.9.tar.bz2' -o $(TMPDIR)/samtools-1.9.tar.bz2
 	cd $(TMPDIR); tar jxvf samtools-1.9.tar.bz2
 	cd $(TMPDIR)/samtools-1.9/htslib-1.9; $(MAKE); $(MAKE) prefix=../../lib/ install
-	cd $(TMPDIR)/samtools-1.9; ./configure;\
-	 #make DFLAGS="-D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE -D_CURSES_LIB=0" LIBCURSES="";\
-	 $(MAKE) prefix=../../lib/ install
+	cd $(TMPDIR)/samtools-1.9; ./configure; $(MAKE) prefix=../../lib/ install
 	cp $(TMPDIR)/samtools-1.9/htslib-1.9/bgzip lib/bin/bgzip
 	cp $(TMPDIR)/samtools-1.9/htslib-1.9/tabix lib/bin/tabix
+
+install-bcftools:
+	curl -L 'https://github.com/samtools/bcftools/releases/download/1.9/bcftools-1.9.tar.bz2' -o $(TMPDIR)/bcftools-1.9.tar.bz2
+	cd $(TMPDIR); tar jxvf bcftools-1.9.tar.bz2
+	cd $(TMPDIR)/bcftools-1.9/htslib-1.9; $(MAKE); $(MAKE) prefix=../../lib/ install
+	cd $(TMPDIR)/bcftools-1.9; ./configure; $(MAKE) prefix=../../lib/ install
 
 install-trinity:
 	curl -L 'https://github.com/trinityrnaseq/trinityrnaseq/archive/Trinity-v2.6.6.tar.gz' -o $(TMPDIR)/Trinity-v2.6.6.tar.gz
@@ -96,7 +100,8 @@ install-popoolation:
 	curl -L 'https://downloads.sourceforge.net/project/popoolation/popoolation_1.2.2.zip' -o $(TMPDIR)/popoolation_1.2.2.zip
 	unzip $(TMPDIR)/popoolation_1.2.2.zip -d $(TMPDIR)
 	mv $(TMPDIR)/popoolation_1.2.2 lib/poppoolation
-
+	
+#not currently installed
 install-vcftools:
 	curl -L 'https://github.com/vcftools/vcftools/releases/download/v0.1.16/vcftools-0.1.16.tar.gz' -o $(TMPDIR)/vcftools.tar.gz
 	tar -xzf $(TMPDIR)/vcftools.tar.gz -C $(TMPDIR)

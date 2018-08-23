@@ -34,3 +34,17 @@ def consensus(libpath,runCFG,threads,ids):
         cmd = shlex.split(cmd)
         with open(runCFG['exec']['outdir']+'/consensus/'+'{id}.vcf'.format(id=id),'w') as vcfout:
             sub.Popen(cmd,cwd=runCFG['exec']['outdir'],stdout=vcfout).wait()
+
+        #compress vcf file with bgzip and index with tabix
+        cmd = '{libpath}/bin/bgzip consensus/{id}.vcf'.format(libpath=libpath,id=id)
+        cmd = shlex.split(cmd)
+        sub.Popen(cmd,cwd=runCFG['exec']['outdir']).wait()
+        cmd = '{libpath}/bin/tabix consensus/{id}.vcf.gz'.format(libpath=libpath,id=id)
+        cmd = shlex.split(cmd)
+        sub.Popen(cmd,cwd=runCFG['exec']['outdir']).wait()
+
+        #use bcftools to get consensus fasta
+        cmd = "{libpath}/bin/bcftools consensus -f {reference} consensus/{id}.vcf.gz".format(libpath=libpath,reference=reference,id=id)
+        cmd = shlex.split(cmd)
+        with open(runCFG['exec']['outdir']+'/consensus/'+'{id}.fasta'.format(id=id),'w') as fastaout:
+            sub.Popen('/bin/bash',cwd=runCFG['exec']['outdir'],stdout=fastaout).wait()
