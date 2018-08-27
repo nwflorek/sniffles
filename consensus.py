@@ -30,7 +30,7 @@ def consensus(libpath,runCFG,threads,ids):
         with open(runCFG['exec']['outdir']+'/'+'{id}.pileup'.format(id=id),'w') as mpileup:
             sub.Popen(cmd,cwd=runCFG['exec']['outdir'],stdout=mpileup).wait()
 
-        cmd = "java -jar {libpath}/varscan/VarScan.v2.3.9.jar mpileup2cns {id}.pileup --min-coverage {min_cov} --min-avg-qual {snp_qual_threshold} --min-var-freq {snp_frequency} --strand-filter 1 --output-vcf 1".format(libpath=libpath, id=id, snp_frequency=runCFG['snpcalling']['snpFrequency'],min_cov=runCFG['snpcalling']['minCoverage'], snp_qual_threshold=runCFG['snpcalling']['snpQualityThreshold'])
+        cmd = "java -jar {libpath}/varscan/VarScan.v2.3.9.jar mpileup2cns {id}.pileup --min-coverage {min_cov} --min-avg-qual {snp_qual_threshold} --min-var-freq 0.5 --strand-filter 1 --output-vcf 1".format(libpath=libpath, id=id, snp_frequency=runCFG['snpcalling']['snpFrequency'],min_cov=runCFG['snpcalling']['minCoverage'], snp_qual_threshold=runCFG['snpcalling']['snpQualityThreshold'])
         cmd = shlex.split(cmd)
         with open(runCFG['exec']['outdir']+'/consensus/'+'{id}.vcf'.format(id=id),'w') as vcfout:
             sub.Popen(cmd,cwd=runCFG['exec']['outdir'],stdout=vcfout).wait()
@@ -47,4 +47,4 @@ def consensus(libpath,runCFG,threads,ids):
         cmd = "{libpath}/bin/bcftools consensus -f {reference} consensus/{id}.vcf.gz".format(libpath=libpath,reference=reference,id=id)
         cmd = shlex.split(cmd)
         with open(runCFG['exec']['outdir']+'/consensus/'+'{id}.fasta'.format(id=id),'w') as fastaout:
-            sub.Popen('/bin/bash',cwd=runCFG['exec']['outdir'],stdout=fastaout).wait()
+            sub.Popen(cmd,cwd=runCFG['exec']['outdir'],stdout=fastaout).wait()
