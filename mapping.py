@@ -2,28 +2,57 @@ import os;
 import shlex
 import subprocess as sub
 
-def mapping(libPath,runCFG,threads,ids,normalized=False):
-    refPath = os.path.abspath(runCFG['exec']['referenceSequence'])
-    refName = os.path.basename(refPath)
+def mapping(readData,runCFG,threads='1',ids=''):
+    #inital parameters
+    reference_sequence = os.path.abspath(runCFG['exec']['referenceSequence'])
+    reference_sequence_name = os.path.basename(reference_sequence)
+    libPath = runCFG['libPath']
+    outDir = runCFG['exec']['outdir']
+
+    #use id if provided otherwise get list
+    if not ids:
+        ids = readData.idList
 
     #index reference
-    cmd = '{path}/bin/bowtie2-build {reference_sequence} {reference_sequence_name}'.format(path=libPath,reference_sequence=refPath,reference_sequence_name=refName)
-    cmd = shlex.split(cmd)
-    sub.Popen(cmd,cwd=runCFG['exec']['outdir']).wait()
+    if 'bowtieindexed' not in runCFG:
+        cmd = f'{libPath}/bin/bowtie2-build {reference_sequence} {reference_sequence_name}'
+        cmd = shlex.split(cmd)
+        sub.Popen(cmd,cwd=outDir).wait()
+        readData.data['bowtieindexed'] = True
+
+    
 
     #map reads
-    fwdReads = []
-    revReads = []
-    if normalized:
-        for id in ids:
-            reads = '{id}_normalized.fastq'.format(id=id)
-            cmd = "{path}/bin/bowtie2 -x {reference_sequence} --interleaved {reads} -S {id}_remapped.sam -p {threads} --local".format(path=libPath,id=id,reads=reads,threads=threads,reference_sequence=refName)
-            cmd = shlex.split(cmd)
-            sub.Popen(cmd,cwd=runCFG['exec']['outdir']).wait()
-    else:
-        for id in ids:
-            fwdRead = 'trimmed/{id}_trimmed_1P.fastq.gz'.format(id=id)
-            revRead = 'trimmed/{id}_trimmed_2P.fastq.gz'.format(id=id)
-            cmd = "{path}/bin/bowtie2 -x {reference_sequence} -1 {fwdRead} -2 {revRead} -S {id}.sam -p {threads} --local".format(path=libPath,id=id,fwdRead=fwdRead,revRead=revRead,threads=threads,reference_sequence=refName)
-            cmd = shlex.split(cmd)
-            sub.Popen(cmd,cwd=runCFG['exec']['outdir']).wait()
+    for id in ids:
+        print(readData.data)
+        #determine reads
+        if 'trimmed' in readData.data and id not in readData.data['mapProgress']['trimmed']:
+            #TODO add status for unpaired read information
+            reads = [readData.data['trimm'][id][0],readData.data['trimm'][id][1]]
+            readData.data['mapProgress']['trimmed'].append(id)
+            interleaved = False
+
+        elif 'normalized' in readData.data and id not in readData.data['mapProgress']['normalized']:
+            reads = readData.data['normalized'][id]
+            readData.data['mapProgress']['normalized'].append(id)
+            interleaved = True
+
+        elif 'consensus' in readData.data and id not in readData.data['mapProgress']['consensus']:
+            print('do things for mapping to consensus')
+
+        else:
+            print(f'There was an error mapping {id}.')
+            exit()
+
+        #determine interleaved or not
+        #interleaved cmd
+        if interleaved:
+            interleaved_cmd = f"{libPath}/bin/bowtie2 -x {reference_sequence_name} --interleaved {reads} -S {id}_remapped.sam -p {threads} --local"
+            cmd = shlex.split(interleaved_cmd)
+        #split cmd
+        else:
+            split_cmd = f"{libPath}/bin/bowtie2 -x {reference_sequence_name} -1 {reads[0]} -2 {reads[1]} -S {id}.sam -p {threads} --local"
+            cmd = shlex.split(split_cmd)
+
+        #run command
+        #sub.Popen(cmd,cwd=outDir).wait()

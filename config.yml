@@ -7,6 +7,7 @@ exec:
   map: True
   callSNPs: False
   generateConsensus: True
+  mapToConsensus: True
   annotateAAChanges: True
   denovoAssembly: True
   denovoAssembleMappedReads: True
@@ -55,6 +56,7 @@ snpcalling:
   minCoverage: 100
   snpQualityThreshold: 30
   snpFrequency: 0.01
+  consensusFrequency: 0.50
 
 poppoolation:
   subsampleLevel: 1000

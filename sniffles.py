@@ -6,7 +6,6 @@ import yaml
 import argparse
 import os
 from shutil import copyfile
-import multiprocessing as mp
 from trim import trimmomatic
 from mapping import mapping
 from consensus import consensus
@@ -23,7 +22,6 @@ parser.add_argument('-t',metavar='threads', type=int,help="number of cpus to use
 args = parser.parse_args()
 numThreads = args.t
 configFile = args.c
-libPath = os.path.join(os.path.dirname(os.path.abspath(__file__)),'lib')
 
 #get input and output paths
 try:
@@ -39,9 +37,13 @@ except (AttributeError, TypeError) as err:
 with open(configFile,'r') as ymlFile:
     cfg = yaml.load(ymlFile)
 
+#add lib path to cfg
+cfg['libPath'] = os.path.join(os.path.dirname(os.path.abspath(__file__)),'lib')
+
 #create outdir
+cfg['exec']['outdir'] = os.path.join(outDir,cfg['exec']['outdir'])
 try:
-    os.mkdir(os.path.join(outDir,cfg['exec']['outdir']))
+    os.mkdir(cfg['exec']['outdir'])
 except FileExistsError:
     print('Please remove the files generated from the previous run or rename the output file.')
     exit()
@@ -50,27 +52,26 @@ except FileExistsError:
 copyfile(cfg['exec']['referenceSequence'],os.path.join(outDir,cfg['exec']['outdir'])+'/'+cfg['exec']['referenceSequence'])
 
 #parse and store read information from input directory
-r = fh.reads(inDir)
+readData = fh.reads(inDir)
 
-#begin trimming
-pool = mp.Pool(processes=numThreads)
-pool.starmap(trimmomatic,[[libPath,cfg,i[0],i[1],i[2]] for i in r.retList()])
+trimmomatic(readData,cfg,numThreads)
 
 #begin mapping
-mapping(libPath,cfg,numThreads,r.idList)
-
+mapping(readData,cfg,numThreads)
+'''
 #datacleaning
 if cfg['exec']['removeDupReads']:
-    rc.removeDuplicates(libPath,cfg,numThreads,r.idList)
+    rc.removeDuplicates(readData,cfg,numThreads)
 
 #normalize coverage
 if cfg['exec']['normalizeCoverage']:
-    rc.normCoverage(libPath,cfg,numThreads,r.idList)
+    rc.normCoverage(readData,cfg,numThreads)
 
 #generate consensus
 if cfg['exec']['generateConsensus']:
-    consensus(libPath,cfg,numThreads,r.idList)
+    consensus(readData,cfg,numThreads)
 
 #call snps
-if cfg['exec']['callSNPs']:
-    snpcaller(libPath,cfg,numThreads,r.idList)
+#if cfg['exec']['callSNPs']:
+#    snpcaller(libPath,cfg,numThreads,r.idList)
+'''
