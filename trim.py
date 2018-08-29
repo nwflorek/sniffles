@@ -3,6 +3,20 @@ import shlex
 import subprocess as sub
 import multiprocessing as mp
 
+#define process for multiprocessing
+def trim(outDir,cmd):
+    cmd = shlex.split(cmd)
+    p = sub.Popen(cmd,cwd=os.path.join(outDir,'trimmed'),stdout=sub.PIPE)
+    lock.acquire()
+    for line in p.stdout:
+        print(line)
+    lock.release()
+    p.wait()
+#make a lock global for child workers
+def init(l):
+    global lock
+    lock = l
+
 def trimmomatic(readData,runCFG,threads,ids=''):
 
     #parameters
@@ -23,6 +37,10 @@ def trimmomatic(readData,runCFG,threads,ids=''):
         #main command
         main_cmd = f'java -jar {libPath}/trimmomatic/trimmomatic-0.36.jar '
 
+        #get read path
+        if readData.rawdata[id]:
+            read1 = readData.rawdata[id][0]
+            read2 = readData.rawdata[id][1]
         #determine args
         if runCFG['trimmomatic']['removeAdapters']:
             if runCFG['trimmomatic']['paired']:
@@ -49,12 +67,8 @@ def trimmomatic(readData,runCFG,threads,ids=''):
     except:
         pass
 
-    #define process for multiprocessing
-    def trim(cmd):
-        cmd = shlex.split(cmd)
-        sub.Popen(cmd,cwd=os.path.join(outDir,'trimmed')).wait()
-        
     #set up multiprocessing
     #start multiprocessing
-    pool = mp.Pool(processes=threads)
-    pool.map(trim, for i in cmds])
+    lock = mp.Lock()
+    pool = mp.Pool(processes=threads,initializer=init,initargs=(lock,))
+    pool.starmap(trim, [[outDir,i] for i in cmds])
