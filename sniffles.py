@@ -58,7 +58,7 @@ trimmomatic(readData,cfg,numThreads)
 
 #begin mapping
 mapping(readData,cfg,numThreads)
-'''
+
 #datacleaning
 if cfg['exec']['removeDupReads']:
     rc.removeDuplicates(readData,cfg,numThreads)
@@ -66,7 +66,7 @@ if cfg['exec']['removeDupReads']:
 #normalize coverage
 if cfg['exec']['normalizeCoverage']:
     rc.normCoverage(readData,cfg,numThreads)
-
+'''
 #generate consensus
 if cfg['exec']['generateConsensus']:
     consensus(readData,cfg,numThreads)

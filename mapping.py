@@ -1,6 +1,9 @@
-import os;
+import os
 import shlex
 import subprocess as sub
+import multiprocessing as mp
+import time
+from sniffProc import proc,init
 
 def mapping(readData,runCFG,threads='1',ids=''):
     #inital parameters
@@ -8,27 +11,31 @@ def mapping(readData,runCFG,threads='1',ids=''):
     reference_sequence_name = os.path.basename(reference_sequence)
     libPath = runCFG['libPath']
     outDir = runCFG['exec']['outdir']
+    logfile = os.path.join(outDir,runCFG['exec']['logfile'])
 
     #use id if provided otherwise get list
     if not ids:
         ids = readData.idList
 
     #index reference
-    if 'bowtieindexed' not in runCFG:
+    if 'bowtieindexed' not in readData.data:
         cmd = f'{libPath}/bin/bowtie2-build {reference_sequence} {reference_sequence_name}'
         cmd = shlex.split(cmd)
-        sub.Popen(cmd,cwd=outDir).wait()
+        with open(logfile,'a') as outlog:
+            outlog.write("*************************\n")
+            outlog.write("Bowtie indexing reference\n")
+        with open(logfile,'a') as outlog:
+            sub.Popen(cmd,cwd=outDir,stdout=outlog,stderr=outlog).wait()
+            outlog.write("*************************\n")
         readData.data['bowtieindexed'] = True
 
-    
-
-    #map reads
+    #generate mapping commands
+    cmds = []
     for id in ids:
-        print(readData.data)
         #determine reads
         if 'trimmed' in readData.data and id not in readData.data['mapProgress']['trimmed']:
             #TODO add status for unpaired read information
-            reads = [readData.data['trimm'][id][0],readData.data['trimm'][id][1]]
+            reads = [readData.data['trimmed'][id][0],readData.data['trimmed'][id][1]]
             readData.data['mapProgress']['trimmed'].append(id)
             interleaved = False
 
@@ -47,12 +54,34 @@ def mapping(readData,runCFG,threads='1',ids=''):
         #determine interleaved or not
         #interleaved cmd
         if interleaved:
-            interleaved_cmd = f"{libPath}/bin/bowtie2 -x {reference_sequence_name} --interleaved {reads} -S {id}_remapped.sam -p {threads} --local"
-            cmd = shlex.split(interleaved_cmd)
+            interleaved_cmd = f"{libPath}/bin/bowtie2 -x {reference_sequence_name} --interleaved {reads[0]} -S {id}_remapped.sam -p 2 --local"
+            cmds.append(interleaved_cmd)
         #split cmd
         else:
-            split_cmd = f"{libPath}/bin/bowtie2 -x {reference_sequence_name} -1 {reads[0]} -2 {reads[1]} -S {id}.sam -p {threads} --local"
-            cmd = shlex.split(split_cmd)
+            split_cmd = f"{libPath}/bin/bowtie2 -x {reference_sequence_name} -1 {reads[0]} -2 {reads[1]} -S {id}.sam -p 2 --local"
+            cmds.append(split_cmd)
 
-        #run command
-        #sub.Popen(cmd,cwd=outDir).wait()
+    #set up multiprocessing
+    #start multiprocessing
+    lock = mp.Lock()
+    pool = mp.Pool(processes=1,initializer=init,initargs=(lock,))
+    #notify starting mapping
+    print('\n**************************')
+    print('\nSniffles: Started mapping')
+    #denote start of mapping in logs
+    with open(logfile,'a') as outlog:
+        outlog.write('*******\n')
+        outlog.write('Mapping\n')
+    #get start time
+    start = time.time()
+    #start multiprocessing
+    pool.starmap(proc, [[runCFG,i] for i in cmds])
+    #get end time
+    end = time.time()
+    #denote end of mapping in log
+    with open(logfile,'a') as outlog:
+        outlog.write('*******\n')
+    #get total runtime
+    runtime = end - start
+    print(f'\nSniffles finished mapping in {runtime} seconds')
+    print('\n**************************')
