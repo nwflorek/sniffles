@@ -2,20 +2,8 @@ import os
 import shlex
 import subprocess as sub
 import multiprocessing as mp
-
-#define process for multiprocessing
-def trim(outDir,cmd):
-    cmd = shlex.split(cmd)
-    p = sub.Popen(cmd,cwd=os.path.join(outDir,'trimmed'),stdout=sub.PIPE)
-    lock.acquire()
-    for line in p.stdout:
-        print(line)
-    lock.release()
-    p.wait()
-#make a lock global for child workers
-def init(l):
-    global lock
-    lock = l
+import time
+from sniffProc import proc,init
 
 def trimmomatic(readData,runCFG,threads,ids=''):
 
@@ -26,6 +14,7 @@ def trimmomatic(readData,runCFG,threads,ids=''):
     adapterpath = runCFG['trimmomatic']['adaptersPath']
     outDir = runCFG['exec']['outdir']
     libPath=runCFG['libPath']
+    logfile = os.path.join(outDir,runCFG['exec']['logfile'])
 
     #set up list of ids to trim
     if not ids:
@@ -71,4 +60,23 @@ def trimmomatic(readData,runCFG,threads,ids=''):
     #start multiprocessing
     lock = mp.Lock()
     pool = mp.Pool(processes=threads,initializer=init,initargs=(lock,))
-    pool.starmap(trim, [[outDir,i] for i in cmds])
+    #notify starting trimming
+    print('\n**********************************')
+    print('\nSniffles: Started quality trimming')
+    #start timer
+    start = time.time()
+    #denote logs
+    with open(logfile,'a') as outlog:
+        outlog.write('***********\n')
+        outlog.write('Trimmomatic\n')
+    #begin multiprocessing
+    pool.starmap(proc, [[runCFG,i,'trimmed'] for i in cmds])
+    #denote end of logs
+    with open(logfile,'a') as outlog:
+        outlog.write('***********\n')
+    #get time
+    end = time.time()
+    #determine runtime of processes
+    runtime = end - start
+    print(f'\nFinished trimming in {runtime} seconds')
+    print('\n**********************************')

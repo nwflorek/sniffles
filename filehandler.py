@@ -45,7 +45,6 @@ class reads:
                             id = file.split('_')[0]
                             if id not in self.idList:
                                 self.idList.append(id)
-                        print(root+'/'+dir+'/'+file)
                         readList.append(root+'/'+file)
 
         readList.sort()

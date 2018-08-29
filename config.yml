@@ -3,6 +3,7 @@
 #Pipeline execution
 exec:
   outdir: 'sniffle_files'
+  logfile: 'sniffle_logs.log'
   trim: True
   map: True
   callSNPs: False
