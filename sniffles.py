@@ -12,6 +12,9 @@ from consensus import consensus
 import readcleaning as rc
 from snpcaller import snpcaller
 import filehandler as fh
+import time
+import datetime
+import sc
 
 #determine command line arguments and get path
 parser = argparse.ArgumentParser(description='Pipeline to examine SNPs from raw illumina reads')
@@ -22,6 +25,12 @@ parser.add_argument('-t',metavar='threads', type=int,help="number of cpus to use
 args = parser.parse_args()
 numThreads = args.t
 configFile = args.c
+
+#print main display title
+sc.mainTitle()
+
+#get start time
+start = time.time()
 
 #get input and output paths
 try:
@@ -66,12 +75,17 @@ if cfg['exec']['removeDupReads']:
 #normalize coverage
 if cfg['exec']['normalizeCoverage']:
     rc.normCoverage(readData,cfg,numThreads)
-'''
+
 #generate consensus
 if cfg['exec']['generateConsensus']:
     consensus(readData,cfg,numThreads)
-
+'''
 #call snps
 #if cfg['exec']['callSNPs']:
 #    snpcaller(libPath,cfg,numThreads,r.idList)
 '''
+
+sc.procTitle('Finished Sniffles')
+runtime = end - start
+runtime = str(datetime.timedelta(seconds=runtime))
+print('Sniffles finished with a total runtime of {runtime} seconds')

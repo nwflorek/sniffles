@@ -4,6 +4,7 @@ import subprocess as sub
 import multiprocessing as mp
 import time
 from sniffProc import proc,init
+from sc import procTitle
 
 def mapping(readData,runCFG,threads='1',ids=''):
     #inital parameters
@@ -66,7 +67,7 @@ def mapping(readData,runCFG,threads='1',ids=''):
     lock = mp.Lock()
     pool = mp.Pool(processes=1,initializer=init,initargs=(lock,))
     #notify starting mapping
-    print('\n**************************')
+    procTitle('Read Mapping')
     print('\nSniffles: Started mapping')
     #denote start of mapping in logs
     with open(logfile,'a') as outlog:
@@ -84,4 +85,3 @@ def mapping(readData,runCFG,threads='1',ids=''):
     #get total runtime
     runtime = end - start
     print(f'\nSniffles finished mapping in {runtime} seconds')
-    print('\n**************************')

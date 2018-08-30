@@ -4,6 +4,7 @@ import subprocess as sub
 import multiprocessing as mp
 import time
 from sniffProc import proc,init
+from sc import procTitle
 
 def trimmomatic(readData,runCFG,threads,ids=''):
 
@@ -61,7 +62,7 @@ def trimmomatic(readData,runCFG,threads,ids=''):
     lock = mp.Lock()
     pool = mp.Pool(processes=threads,initializer=init,initargs=(lock,))
     #notify starting trimming
-    print('\n**********************************')
+    procTitle('Quality Trimming')
     print('\nSniffles: Started quality trimming')
     #start timer
     start = time.time()
@@ -79,4 +80,3 @@ def trimmomatic(readData,runCFG,threads,ids=''):
     #determine runtime of processes
     runtime = end - start
     print(f'\nFinished trimming in {runtime} seconds')
-    print('\n**********************************')
