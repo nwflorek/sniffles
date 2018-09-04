@@ -5,6 +5,7 @@ from mapping import mapping
 import multiprocessing as mp
 import time
 from sniffProc import proc,init
+from sc import procTitle
 
 def removeDuplicates(readData,runCFG,threads='1',ids=''):
     #inital parameters
@@ -17,8 +18,8 @@ def removeDuplicates(readData,runCFG,threads='1',ids=''):
         ids = readData.idList
 
     #notify starting to remove duplicates
-    print('\n********************************')
-    print('Sniffles: Removing duplicate reads')
+    procTitle('Remove Duplicates')
+    print('\nSniffles: Removing duplicate reads')
     #get time at start
     start = time.time()
 
@@ -60,7 +61,6 @@ def removeDuplicates(readData,runCFG,threads='1',ids=''):
     #determine runtime of processes
     runtime = end - start
     print(f'\nSniffles finished removing duplicates in {runtime} seconds')
-    print('\n********************************')
 
     #cleanup
     for id in ids:
@@ -102,12 +102,12 @@ def normCoverage(readData,runCFG,threads='1',ids=''):
     #set up multiprocessing
     #start multiprocessing
     lock = mp.Lock()
-    
+
     #NOTE: although normalizing is setup for multiprocessing bbnorm
     #uses all available memory, thus can only be run serialy
     pool = mp.Pool(processes=1,initializer=init,initargs=(lock,))
     #notify starting to remove duplicates
-    print('\n***********************************')
+    procTitle('Normalize Coverage')
     print('\nSniffles: Normalizing read coverage')
 
     #denote start of remove duplicate reads in logs
@@ -130,7 +130,6 @@ def normCoverage(readData,runCFG,threads='1',ids=''):
     #determine runtime of processes
     runtime = end - start
     print(f'\nSniffles finished normalizing read coverage in {runtime} seconds')
-    print('\n***********************************')
 
     #cleanup
     for id in ids:

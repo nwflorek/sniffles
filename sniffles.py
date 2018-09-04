@@ -86,6 +86,7 @@ if cfg['exec']['generateConsensus']:
 '''
 
 sc.procTitle('Finished Sniffles')
+end = time.time()
 runtime = end - start
 runtime = str(datetime.timedelta(seconds=runtime))
-print('Sniffles finished with a total runtime of {runtime} seconds')
+print(f'Sniffles finished with a total runtime of {runtime} seconds')

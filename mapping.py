@@ -6,10 +6,11 @@ import time
 from sniffProc import proc,init
 from sc import procTitle
 
-def mapping(readData,runCFG,threads='1',ids=''):
+def mapping(readData,runCFG,threads='1',ids='',refs=None):
     #inital parameters
-    reference_sequence = os.path.abspath(runCFG['exec']['referenceSequence'])
-    reference_sequence_name = os.path.basename(reference_sequence)
+    if not refs:
+        reference_sequence = os.path.abspath(runCFG['exec']['referenceSequence'])
+        reference_sequence_name = os.path.basename(reference_sequence)
     libPath = runCFG['libPath']
     outDir = runCFG['exec']['outdir']
     logfile = os.path.join(outDir,runCFG['exec']['logfile'])
@@ -29,6 +30,21 @@ def mapping(readData,runCFG,threads='1',ids=''):
             sub.Popen(cmd,cwd=outDir,stdout=outlog,stderr=outlog).wait()
             outlog.write("*************************\n")
         readData.data['bowtieindexed'] = True
+    ref_dict = {}
+    if refs:
+        for ref in refs:
+            reference_sequence = os.path.abspath(ref[1][0])
+            reference_sequence_name = os.path.basename(ref[1][0])
+            cmd = f'{libPath}/bin/bowtie2-build {reference_sequence} {reference_sequence_name}'
+            cmd = shlex.split(cmd)
+            with open(logfile,'a') as outlog:
+                outlog.write("*************************\n")
+                outlog.write("Bowtie indexing reference\n")
+            with open(logfile,'a') as outlog:
+                sub.Popen(cmd,cwd=outDir,stdout=outlog,stderr=outlog).wait()
+                outlog.write("*************************\n")
+            readData.data['bowtieindexed'] = True
+            ref_dict[ref[0]] = reference_sequence_name
 
     #generate mapping commands
     cmds = []
@@ -46,16 +62,22 @@ def mapping(readData,runCFG,threads='1',ids=''):
             interleaved = True
 
         elif 'consensus' in readData.data and id not in readData.data['mapProgress']['consensus']:
-            print('do things for mapping to consensus')
-
+            reads = [readData.data['trimmed'][id][0],readData.data['trimmed'][id][1]]
+            readData.data['mapProgress']['normalized'].append(id)
+            interleaved = False
         else:
             print(f'There was an error mapping {id}.')
             exit()
 
         #determine interleaved or not
         #interleaved cmd
+        if ref_dict:
+            reference_sequence_name = ref_dict[id]
+            sam = 'consensus'
+        else:
+            sam = 'remapped'
         if interleaved:
-            interleaved_cmd = f"{libPath}/bin/bowtie2 -x {reference_sequence_name} --interleaved {reads[0]} -S {id}_remapped.sam -p 2 --local"
+            interleaved_cmd = f"{libPath}/bin/bowtie2 -x {reference_sequence_name} --interleaved {reads[0]} -S {id}_{sam}.sam -p 2 --local"
             cmds.append(interleaved_cmd)
         #split cmd
         else:
