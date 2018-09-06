@@ -27,6 +27,7 @@ def consensus(readData,runCFG,threads='1',ids=''):
     procTitle('Generate Consensus')
     print('\nSniffles: Started generating consensus sequence')
     #get start time
+    overall_start = time.time()
     start = time.time()
     #set reference sequence and begin
     reference = runCFG['exec']['referenceSequence']
@@ -66,6 +67,7 @@ def consensus(readData,runCFG,threads='1',ids=''):
     end = time.time()
     runtime = end - start
     print(f'\nSniffles finished pileup in {runtime} seconds')
+    start = time.time()
 
     #command list for generating consensus vcf
     cmds = []
@@ -85,6 +87,7 @@ def consensus(readData,runCFG,threads='1',ids=''):
     end = time.time()
     runtime = end - start
     print(f'\nSniffles finished generating the VCF in {runtime} seconds')
+    start = time.time()
 
     #command list for compressing files
     zip_cmds = []
@@ -103,6 +106,7 @@ def consensus(readData,runCFG,threads='1',ids=''):
     end = time.time()
     runtime = end - start
     print(f'\nSniffles finished compressing and indexing in {runtime} seconds')
+    start = time.time()
 
     #command list for generating consensus fasta
     cmds = []
@@ -117,7 +121,7 @@ def consensus(readData,runCFG,threads='1',ids=''):
 
     #determine runtime of processes
     end = time.time()
-    runtime = end - start
+    runtime = end - overall_start
     print(f'\nSniffles finished generating consensus sequence in {runtime} seconds')
 
     #if mapping reads to consensus is specified run mapping

@@ -79,11 +79,10 @@ if cfg['exec']['normalizeCoverage']:
 #generate consensus
 if cfg['exec']['generateConsensus']:
     consensus(readData,cfg,numThreads)
-'''
+
 #call snps
-#if cfg['exec']['callSNPs']:
-#    snpcaller(libPath,cfg,numThreads,r.idList)
-'''
+if cfg['exec']['callSNPs']:
+    snpcaller(readData,cfg,numThreads)
 
 sc.procTitle('Finished Sniffles')
 end = time.time()

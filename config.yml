@@ -6,7 +6,7 @@ exec:
   logfile: 'sniffle_logs.log'
   trim: True
   map: True
-  callSNPs: False
+  callSNPs: True
   generateConsensus: True
   mapToConsensus: True
   annotateAAChanges: True
