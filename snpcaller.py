@@ -86,6 +86,7 @@ def snpcaller(readData,runCFG,threads='1',ids=''):
 
         #command list for annotating aa changes
         if runCFG['exec']['annotateAAChanges']:
+            pass
             #TODO add annotater for annotating aa changes
             #reference = reference.split('.')[0]
             #cmd = f'java -jar {libPath}/snpeff/snpEff.jar {reference}.fasta {id}_snps.vcf'
