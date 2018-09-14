@@ -34,18 +34,17 @@ class reads:
         readList = []
         for root,dirs,files in os.walk(path):
             #scan path and look for fastq files and record ids
-            for dir in dirs:
-                for file in files:
-                    if '.fastq' in file:
-                        if '_R1' in file or '_1' in file:
-                            id = file.split('_')[0]
-                            if id not in self.idList:
-                                self.idList.append(id)
-                        if '_R2' in file or '_2' in file:
-                            id = file.split('_')[0]
-                            if id not in self.idList:
-                                self.idList.append(id)
-                        readList.append(root+'/'+file)
+            for file in files:
+                if '.fastq' in file:
+                    if '_R1' in file or '_1' in file:
+                        id = file.split('_')[0]
+                        if id not in self.idList:
+                            self.idList.append(id)
+                    if '_R2' in file or '_2' in file:
+                        id = file.split('_')[0]
+                        if id not in self.idList:
+                            self.idList.append(id)
+                    readList.append(root+'/'+file)
 
         readList.sort()
         for id in self.idList:
