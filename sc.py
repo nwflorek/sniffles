@@ -1,5 +1,10 @@
 import os
 
+def checkexists(path):
+    path = os.path.abspath(path)
+    if not os.is_dir(path):
+        os.mkdir(path)
+
 def procTitle(title):
     title = ' '+title+' '
     rows,cols = os.popen('stty size','r').read().split()
