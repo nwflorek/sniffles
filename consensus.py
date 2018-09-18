@@ -93,6 +93,25 @@ def consensus(readData,runCFG,threads='1',ids=''):
     print(f'\nSniffles finished generating the VCF in {runtime} seconds')
     start = time.time()
 
+    #check if vcf file is empty, if it is skip id and remove vcf file
+    for id in ids:
+        try:
+            vcf_file = os.path.join(outDir,'consensus',f'{id}.vcf')
+            if not os.path.getsize(vcf_file)>0:
+                ids.remove(id)
+            else:
+                empty = True
+                with open(vcf_file,'r') as vcffile:
+                    for line in vcffile:
+                        line = line.strip()
+                        if line and line[0] != '#':
+                            empty = False
+                if empty:
+                    ids.remove(id)
+                    os.remove(vcf_file)
+        except:
+            ids.remove(id)
+
     #command list for compressing files
     zip_cmds = []
     idx_cmds = []
