@@ -66,7 +66,7 @@ readData = fh.reads(inDir)
 trimmomatic(readData,cfg,numThreads)
 
 #begin mapping
-mapping(readData,cfg,numThreads)
+mapping(readData,cfg,numThreads,jobtype='map-trimmed')
 
 #datacleaning
 if cfg['exec']['removeDupReads']:

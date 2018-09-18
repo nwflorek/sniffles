@@ -5,7 +5,7 @@ from mapping import mapping
 import multiprocessing as mp
 import time
 from sniffProc import proc,init
-from sc import procTitle
+from sc import procTitle,checkexists
 
 def removeDuplicates(readData,runCFG,threads='1',ids=''):
     #inital parameters
@@ -27,20 +27,21 @@ def removeDuplicates(readData,runCFG,threads='1',ids=''):
     cmds = []
     for id in ids:
         #sort samfile
-        cmd01 = f'{libPath}/bin/samtools view -b {id}.sam'
+        cmd01 = f'{libPath}/bin/samtools view -b {outdir}/inital_mapping/{id}.sam'
         cmd01 = shlex.split(cmd01)
         cmd02 = f'{libPath}/bin/samtools sort'
         cmd02 = shlex.split(cmd02)
         cmd03 = f'{libPath}/bin/samtools view -h'
         cmd03 = shlex.split(cmd03)
-        with open(outDir+'/'+'{id}_sorted.sam'.format(id=id),'w') as outsam:
+        with open(outDir+'/inital_mapping/'+'{id}_sorted.sam'.format(id=id),'w') as outsam:
             c1 = sub.Popen(cmd01,stdout=sub.PIPE,cwd=outDir)
             c2 = sub.Popen(cmd02,stdin=c1.stdout,stdout=sub.PIPE,cwd=outDir)
             c3 = sub.Popen(cmd03,stdin=c2.stdout,stdout=outsam,cwd=outDir)
             c3.wait()
 
+        checkexists(os.path.join(outDir,'nodups'))
         #remove duplicate reads command
-        cmd = f'java -jar {libPath}/picard/picard.jar MarkDuplicates I={id}_sorted.sam O={id}_nodups.sam REMOVE_DUPLICATES=true M={id}.removeDupMetrics.txt'
+        cmd = f'java -Xmx2g -jar {libPath}/picard/picard.jar MarkDuplicates I={outDir}/inital_mapping/{id}_sorted.sam O={outDir}/nodups/{id}.sam REMOVE_DUPLICATES=true M={id}.removeDupMetrics.txt'
         cmds.append(cmd)
 
     #set up multiprocessing
@@ -86,17 +87,18 @@ def normCoverage(readData,runCFG,threads='1',ids=''):
     for id in ids:
         #determine which samfile to use if duplicates have been removed
         if id in readData.data['rmDuplicates']:
-            samfile = f'{id}_nodups.sam'
+            samfile = f'{outDir}/inital_mapping/{id}_nodups.sam'
         else:
-            samfile = f'{id}.sam'
+            samfile = f'{outDir}/inital_mapping/{id}.sam'
 
+        checkexists(os.path.join(outDir,'normalized'))
         #get reads from samfile
-        cmd = f'{libPath}/bbmap/reformat.sh in={samfile} out={id}_adjusted.fastq'
+        cmd = f'{libPath}/bbmap/reformat.sh in={samfile} out={outDir}/normalized/{id}_adjusted.fastq'
         format_cmds.append(cmd)
 
         #run bbnorm
         cov = runCFG['exec']['coverageNormDepth']
-        cmd = f'{libPath}/bbmap/bbnorm.sh in={id}_adjusted.fastq out={id}_normalized.fastq target={cov}'
+        cmd = f'{libPath}/bbmap/bbnorm.sh in={outDir}/normalized/{id}_adjusted.fastq out={outDir}/normalized/{id}_normalized.fastq target={cov}'
         norm_cmds.append(cmd)
 
     #set up multiprocessing
@@ -133,8 +135,8 @@ def normCoverage(readData,runCFG,threads='1',ids=''):
 
     #cleanup
     for id in ids:
-        os.remove(f'{outDir}/{id}_adjusted.fastq')
+        os.remove(f'{outDir}/normalized/{id}_adjusted.fastq')
         #add to tracker
-        readData.addData('normalized',id,f'{outDir}/{id}_normalized.fastq')
+        readData.addData('normalized',id,f'{outDir}/normalized/{id}_normalized.fastq')
 
-    mapping(readData,runCFG,threads,ids)
+    mapping(readData,runCFG,threads,ids,jobtype='map-normalized')

@@ -4,9 +4,9 @@ import subprocess as sub
 import multiprocessing as mp
 import time
 from sniffProc import proc,init
-from sc import procTitle
+from sc import procTitle,checkexists
 
-def mapping(readData,runCFG,threads='1',ids='',refs=None):
+def mapping(readData,runCFG,threads='1',ids='',refs=None,jobtype=None):
     #inital parameters
     if not refs:
         reference_sequence = os.path.abspath(runCFG['exec']['referenceSequence'])
@@ -49,40 +49,46 @@ def mapping(readData,runCFG,threads='1',ids='',refs=None):
     #generate mapping commands
     cmds = []
     for id in ids:
-        #determine reads
-        if 'trimmed' in readData.data and id not in readData.data['mapProgress']['trimmed']:
+        #setup for multiple references
+        if ref_dict:
+            reference_sequence_name = ref_dict[id]
+
+        #determine jobtype and generate mapping command
+        if 'map-trimmed' == jobtype:
             #TODO add status for unpaired read information
+            #get read paths from readdata object (stored by trim)
             reads = [readData.data['trimmed'][id][0],readData.data['trimmed'][id][1]]
+            #add id to progress tracker
             readData.data['mapProgress']['trimmed'].append(id)
-            interleaved = False
+            #check output folder exists
+            checkexists(os.path.join(outDir,'inital_mapping'))
+            #generate command
+            cmd = f"{libPath}/bin/bowtie2 -x {reference_sequence_name} -1 {reads[0]} -2 {reads[1]} -S {outDir}/inital_mapping/{id}.sam -p 2 --local"
+            cmds.append(cmd)
 
-        elif 'normalized' in readData.data and id not in readData.data['mapProgress']['normalized']:
+        elif 'map-normalized' == jobtype:
+            #get read path from tracker
             reads = readData.data['normalized'][id]
+            #add ids to mapping tracker
             readData.data['mapProgress']['normalized'].append(id)
-            interleaved = True
+            #check output folder exists
+            checkexists(os.path.join(outDir,'normalized_mapping'))
+            cmd = f"{libPath}/bin/bowtie2 -x {reference_sequence_name} --interleaved {reads[0]} -S {outDir}/normalized_mapping/{id}.sam -p 2 --local"
+            cmds.append(cmd)
 
-        elif 'consensus' in readData.data and id not in readData.data['mapProgress']['consensus']:
+        elif 'map-consensus' == jobtype:
+            #get reads path from tracker
             reads = [readData.data['trimmed'][id][0],readData.data['trimmed'][id][1]]
+            #add ids to mapping tracker
             readData.data['mapProgress']['normalized'].append(id)
-            interleaved = False
+            #check output folder exists
+            checkexists(os.path.join(outDir,'consensus_mapping'))
+            #generate command
+            cmd = f"{libPath}/bin/bowtie2 -x {reference_sequence_name} -1 {reads[0]} -2 {reads[1]} -S {outDir}/consensus_mapping/{id}.sam -p 2 --local"
+            cmds.append(cmd)
         else:
             print(f'There was an error mapping {id}.')
             exit()
-
-        #determine interleaved or not
-        #interleaved cmd
-        if ref_dict:
-            reference_sequence_name = ref_dict[id]
-            sam = 'consensus'
-        else:
-            sam = 'remapped'
-        if interleaved:
-            interleaved_cmd = f"{libPath}/bin/bowtie2 -x {reference_sequence_name} --interleaved {reads[0]} -S {id}_{sam}.sam -p 2 --local"
-            cmds.append(interleaved_cmd)
-        #split cmd
-        else:
-            split_cmd = f"{libPath}/bin/bowtie2 -x {reference_sequence_name} -1 {reads[0]} -2 {reads[1]} -S {id}.sam -p 2 --local"
-            cmds.append(split_cmd)
 
     #set up multiprocessing
     #start multiprocessing

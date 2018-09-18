@@ -40,30 +40,34 @@ def consensus(readData,runCFG,threads='1',ids=''):
     cmds = []
     for id in ids:
         #determine samfile that will be used
-        if runCFG['exec']['removeDupReads']:
-            samfile = f'{id}_nodups.sam'
-        elif runCFG['exec']['normalizeCoverage']:
-            samfile = f'{id}_remapped.sam'
+        #no read cleaning
+        if runCFG['exec']['normalizeCoverage']:
+            samfile = f'{outDir}/normalized_mapping/{id}.sam'
+        elif runCFG['exec']['removeDupReads']:
+            samfile = f'{outDir}/nodups/{id}.sam'
         else:
-            samfile = f'{id}.sam'
+            samfile = f'{outDir}/inital_mapping/{id}.sam'
 
         #convert sam to sorted bam file
         cmd01 = f'{libPath}/bin/samtools view -b {samfile}'
         cmd01 = shlex.split(cmd01)
         cmd02 = f'{libPath}/bin/samtools sort'
         cmd02 = shlex.split(cmd02)
-        with open(outDir+'/'+f'{id}.bam','w') as outbam:
+        checkexists(os.path.join(outDir,'consensus'))
+        with open(outDir+'/consensus/'+f'{id}.bam','w') as outbam:
             c1 = sub.Popen(cmd01,stdout=sub.PIPE,cwd=outDir)
             c2 = sub.Popen(cmd02,stdin=c1.stdout,stdout=outbam,cwd=outDir)
             c2.wait()
 
         #make multiway pileup using samtools
-        cmd = f'{libPath}/bin/samtools mpileup -d 1000000 {id}.bam -f {reference} -o consensus/{id}.pileup'
+        cmd = f'{libPath}/bin/samtools mpileup -d 1000000 {outDir}/consensus/{id}.bam -f {reference} -o {outDir}/consensus/{id}.pileup'
         cmds.append(cmd)
 
     #start multiprocessing
     pool.starmap(proc, [[runCFG,i] for i in cmds])
-
+    #remove temp bam files
+    for id in ids:
+        os.remove(f'{outDir}/consensus/{id}.bam')
     end = time.time()
     runtime = end - start
     print(f'\nSniffles finished pileup in {runtime} seconds')
@@ -77,7 +81,7 @@ def consensus(readData,runCFG,threads='1',ids=''):
         minCov = runCFG['snpcalling']['minCoverage']
         quality = runCFG['snpcalling']['snpQualityThreshold']
         freq = runCFG['snpcalling']['consensusFrequency']
-        cmd = f'java -jar {libPath}/varscan/VarScan.v2.3.9.jar mpileup2cns {id}.pileup --min-coverage {minCov} --min-avg-qual {quality} --min-var-freq {freq} --strand-filter 1 --output-vcf 1'
+        cmd = f'java -jar {libPath}/varscan/VarScan.v2.3.9.jar mpileup2snp {outDir}/consensus/{id}.pileup --min-coverage {minCov} --min-avg-qual {quality} --min-var-freq {freq} --strand-filter 1 --output-vcf 1'
         cmds.append(cmd)
         o = f'{id}.vcf'
         outFiles.append(o)
@@ -112,10 +116,10 @@ def consensus(readData,runCFG,threads='1',ids=''):
     cmds = []
     for id in ids:
         #use bcftools to get consensus fasta
-        cmd = f'{libPath}/bin/bcftools consensus -f {reference} consensus/{id}.vcf.gz -o consensus/{id}.fasta'
+        cmd = f'{libPath}/bin/bcftools consensus -f {reference} {outDir}/consensus/{id}.vcf.gz -o {outDir}/consensus/{id}.fasta'
         cmds.append(cmd)
         #add id as finished on tracking
-        readData.addData('consensus',id,outDir + f'/consensus/{id}.fasta')
+        readData.addData('consensus',id,outDir + f'{outDir}/consensus/{id}.fasta')
     #start multiprocessing
     pool.starmap(proc, [[runCFG,i] for i in cmds])
 
@@ -129,4 +133,4 @@ def consensus(readData,runCFG,threads='1',ids=''):
         refs = []
         for id in ids:
             refs.append([id,readData.data['consensus'][id]])
-        mapping(readData,runCFG,threads,ids,refs=refs)
+        mapping(readData,runCFG,threads,ids,refs=refs,jobtype='map-consensus')
