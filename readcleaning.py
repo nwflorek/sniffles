@@ -27,7 +27,7 @@ def removeDuplicates(readData,runCFG,threads='1',ids=''):
     cmds = []
     for id in ids:
         #sort samfile
-        cmd01 = f'{libPath}/bin/samtools view -b {outdir}/inital_mapping/{id}.sam'
+        cmd01 = f'{libPath}/bin/samtools view -b {outDir}/inital_mapping/{id}.sam'
         cmd01 = shlex.split(cmd01)
         cmd02 = f'{libPath}/bin/samtools sort'
         cmd02 = shlex.split(cmd02)
@@ -66,10 +66,9 @@ def removeDuplicates(readData,runCFG,threads='1',ids=''):
     #cleanup
     for id in ids:
         #remove intermediate files
-        os.remove(outDir+'/'+'{id}_sorted.sam'.format(id=id))
-        os.remove(outDir+'/'+'{id}.sam'.format(id=id))
+        os.remove(outDir+'/inital_mapping/'+'{id}_sorted.sam'.format(id=id))
         #add id to finished list
-        readData.addData('rmDuplicates',id,f'{id}_nodups.sam')
+        readData.addData('rmDuplicates',id,f'{outDir}/nodups/{id}.sam')
 
 def normCoverage(readData,runCFG,threads='1',ids=''):
     #inital parameters
@@ -87,7 +86,7 @@ def normCoverage(readData,runCFG,threads='1',ids=''):
     for id in ids:
         #determine which samfile to use if duplicates have been removed
         if id in readData.data['rmDuplicates']:
-            samfile = f'{outDir}/inital_mapping/{id}_nodups.sam'
+            samfile = f'{outDir}/nodups/{id}.sam'
         else:
             samfile = f'{outDir}/inital_mapping/{id}.sam'
 

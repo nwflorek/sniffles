@@ -5,7 +5,7 @@ def threadbalancer(threads,jobtype=None):
 
 def checkexists(path):
     path = os.path.abspath(path)
-    if not os.path.is_dir(path):
+    if not os.path.isdir(path):
         os.mkdir(path)
 
 def procTitle(title):
