@@ -1,8 +1,11 @@
 import os
 
+def threadbalancer(threads,jobtype=None):
+    pass
+
 def checkexists(path):
     path = os.path.abspath(path)
-    if not os.is_dir(path):
+    if not os.path.is_dir(path):
         os.mkdir(path)
 
 def procTitle(title):
