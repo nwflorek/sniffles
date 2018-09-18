@@ -3,7 +3,7 @@ import shlex
 import subprocess as sub
 import time
 from sniffProc import proc,init
-from sc import procTitle
+from sc import procTitle,checkexists
 from mapping import mapping
 import multiprocessing as mp
 
