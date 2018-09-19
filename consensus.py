@@ -81,7 +81,7 @@ def consensus(readData,runCFG,threads='1',ids=''):
         minCov = runCFG['snpcalling']['minCoverage']
         quality = runCFG['snpcalling']['snpQualityThreshold']
         freq = runCFG['snpcalling']['consensusFrequency']
-        cmd = f'java -jar {libPath}/varscan/VarScan.v2.3.9.jar mpileup2snp {outDir}/consensus/{id}.pileup --min-coverage {minCov} --min-avg-qual {quality} --min-var-freq {freq} --strand-filter 1 --output-vcf 1'
+        cmd = f'java -jar {libPath}/varscan/VarScan.v2.3.9.jar mpileup2cns {outDir}/consensus/{id}.pileup --min-coverage {minCov} --min-avg-qual {quality} --min-var-freq {freq} --strand-filter 1 --output-vcf 1'
         cmds.append(cmd)
         o = f'{id}.vcf'
         outFiles.append(o)
