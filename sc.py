@@ -12,7 +12,8 @@ def procTitle(title):
     title = ' '+title+' '
     rows,cols = os.popen('stty size','r').read().split()
     print('')
-    print(title.center(int(cols),'*'))
+    #print(title.center(int(cols),'*'))
+    print(title.center(59,'*'))
 
 def mainTitle():
     print('''
