@@ -83,21 +83,27 @@ def normCoverage(readData,runCFG,threads='1',ids=''):
     #generate commands
     format_cmds = []
     norm_cmds = []
+    checkexists(os.path.join(outDir,'normalized'))
     for id in ids:
         #determine which samfile to use if duplicates have been removed
         if id in readData.data['rmDuplicates']:
             samfile = f'{outDir}/nodups/{id}.sam'
+            cmd = f'{libPath}/bin/samtools view -b {samfile} | samtools sort > {outDir}/normalized/{id}.bam'
         else:
             samfile = f'{outDir}/inital_mapping/{id}.sam'
+            cmd = f'{libPath}/bin/samtools view -b {samfile} | samtools sort > {outDir}/normalized/{id}.bam'
+            
+        #convert sam to sorted bam
+        sub.Popen(cmd,shell=True).wait()
+        bamfile = f'{outDir}/normalized/{id}.bam'
 
-        checkexists(os.path.join(outDir,'normalized'))
-        #get reads from samfile
-        cmd = f'{libPath}/bbmap/reformat.sh in={samfile} out={outDir}/normalized/{id}_adjusted.fastq'
+        #get reads from bamfile
+        cmd = f'{libPath}/bin/samtools fastq in={bamfile} -1 {outDir}/normalized/{id}_1.fastq -2 {outDir}/normalized/{id}_2.fastq'
         format_cmds.append(cmd)
 
         #run bbnorm
         cov = runCFG['exec']['coverageNormDepth']
-        cmd = f'{libPath}/bbmap/bbnorm.sh in={outDir}/normalized/{id}_adjusted.fastq out={outDir}/normalized/{id}_normalized.fastq target={cov}'
+        cmd = f'{libPath}/bbmap/bbnorm.sh in={outDir}/normalized/{id}_1.fastq in2={outDir}/normalized/{id}_2.fastq out={outDir}/normalized/{id}_normalized.fastq target={cov}'
         norm_cmds.append(cmd)
 
     #set up multiprocessing
