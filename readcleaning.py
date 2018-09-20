@@ -29,7 +29,7 @@ def removeDuplicates(readData,runCFG,threads='1',ids=''):
         #sort samfile
         cmd01 = f'{libPath}/bin/samtools view -b {outDir}/inital_mapping/{id}.sam'
         cmd01 = shlex.split(cmd01)
-        cmd02 = f'{libPath}/bin/samtools sort'
+        cmd02 = f'{libPath}/bin/samtools sort -n'
         cmd02 = shlex.split(cmd02)
         cmd03 = f'{libPath}/bin/samtools view -h'
         cmd03 = shlex.split(cmd03)
@@ -41,7 +41,7 @@ def removeDuplicates(readData,runCFG,threads='1',ids=''):
 
         checkexists(os.path.join(outDir,'nodups'))
         #remove duplicate reads command
-        cmd = f'java -Xmx2g -jar {libPath}/picard/picard.jar MarkDuplicates I={outDir}/inital_mapping/{id}_sorted.sam O={outDir}/nodups/{id}.sam REMOVE_DUPLICATES=true M={id}.removeDupMetrics.txt'
+        cmd = f'java -Xmx2g -jar {libPath}/picard/picard.jar MarkDuplicates I={outDir}/inital_mapping/{id}_sorted.sam O={outDir}/nodups/{id}.sam REMOVE_DUPLICATES=true M={id}.removeDupMetrics.txt ASSUME_SORT_ORDER=queryname'
         cmds.append(cmd)
 
     #set up multiprocessing
@@ -60,7 +60,7 @@ def removeDuplicates(readData,runCFG,threads='1',ids=''):
     with open(logfile,'a') as outlog:
         outlog.write('**********************\n')
     #determine runtime of processes
-    runtime = end - start
+    runtime = round(end - start,2)
     print(f'\nSniffles finished removing duplicates in {runtime} seconds')
 
     #cleanup
@@ -81,6 +81,7 @@ def normCoverage(readData,runCFG,threads='1',ids=''):
         ids = readData.idList
 
     #generate commands
+    bam_cmds = []
     format_cmds = []
     norm_cmds = []
     checkexists(os.path.join(outDir,'normalized'))
@@ -88,31 +89,23 @@ def normCoverage(readData,runCFG,threads='1',ids=''):
         #determine which samfile to use if duplicates have been removed
         if id in readData.data['rmDuplicates']:
             samfile = f'{outDir}/nodups/{id}.sam'
-            cmd = f'{libPath}/bin/samtools view -b {samfile} | samtools sort > {outDir}/normalized/{id}.bam'
+            cmd = f'{libPath}/bin/samtools view -b {samfile} | samtools sort -n > {outDir}/normalized/{id}.bam'
         else:
             samfile = f'{outDir}/inital_mapping/{id}.sam'
-            cmd = f'{libPath}/bin/samtools view -b {samfile} | samtools sort > {outDir}/normalized/{id}.bam'
-            
-        #convert sam to sorted bam
-        sub.Popen(cmd,shell=True).wait()
-        bamfile = f'{outDir}/normalized/{id}.bam'
+            cmd = f'{libPath}/bin/samtools view -b {samfile} | samtools sort -n > {outDir}/normalized/{id}.bam'
+
+        #generate bamfile
+        bam_cmds.append(cmd)
 
         #get reads from bamfile
-        cmd = f'{libPath}/bin/samtools fastq in={bamfile} -1 {outDir}/normalized/{id}_1.fastq -2 {outDir}/normalized/{id}_2.fastq'
+        cmd = f'{libPath}/bin/samtools fastq {outDir}/normalized/{id}.bam -1 {outDir}/normalized/{id}_1.fastq -2 {outDir}/normalized/{id}_2.fastq'
         format_cmds.append(cmd)
 
         #run bbnorm
         cov = runCFG['exec']['coverageNormDepth']
-        cmd = f'{libPath}/bbmap/bbnorm.sh in={outDir}/normalized/{id}_1.fastq in2={outDir}/normalized/{id}_2.fastq out={outDir}/normalized/{id}_normalized.fastq target={cov}'
+        cmd = f'{libPath}/bbmap/bbnorm.sh in={outDir}/normalized/{id}_1.fastq in2={outDir}/normalized/{id}_2.fastq out={outDir}/normalized/{id}_normalized.fastq target={cov} threads={threads}'
         norm_cmds.append(cmd)
 
-    #set up multiprocessing
-    #start multiprocessing
-    lock = mp.Lock()
-
-    #NOTE: although normalizing is setup for multiprocessing bbnorm
-    #uses all available memory, thus can only be run serialy
-    pool = mp.Pool(processes=1,initializer=init,initargs=(lock,))
     #notify starting to remove duplicates
     procTitle('Normalize Coverage')
     print('\nSniffles: Normalizing read coverage')
@@ -125,8 +118,17 @@ def normCoverage(readData,runCFG,threads='1',ids=''):
     #get time at start
     start = time.time()
 
-    #begin multiprocessing
+    #set up multiprocessing
+    #start multiprocessing
+    lock = mp.Lock()
+
+    pool = mp.Pool(processes=threads,initializer=init,initargs=(lock,))
+    pool.starmap(proc,[[runCFG,i,'','',True] for i in bam_cmds])
     pool.starmap(proc, [[runCFG,i] for i in format_cmds])
+
+    #NOTE: although normalizing is setup for multiprocessing bbnorm
+    #uses all available memory, thus can only be run serialy
+    pool = mp.Pool(processes=1,initializer=init,initargs=(lock,))
     pool.starmap(proc, [[runCFG,i] for i in norm_cmds])
 
     #get time at end
@@ -135,12 +137,13 @@ def normCoverage(readData,runCFG,threads='1',ids=''):
         outlog.write('********************\n')
 
     #determine runtime of processes
-    runtime = end - start
+    runtime = round(end - start,2)
     print(f'\nSniffles finished normalizing read coverage in {runtime} seconds')
 
     #cleanup
     for id in ids:
-        os.remove(f'{outDir}/normalized/{id}_adjusted.fastq')
+        #os.remove(f'{outDir}/normalized/{id}_1.fastq')
+        #os.remove(f'{outDir}/normalized/{id}_2.fastq')
         #add to tracker
         readData.addData('normalized',id,f'{outDir}/normalized/{id}_normalized.fastq')
 

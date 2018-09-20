@@ -34,8 +34,9 @@ def mapping(readData,runCFG,threads='1',ids='',refs=None,jobtype=None):
     if refs:
         checkexists('indexes')
         for ref in refs:
-            reference_sequence = os.path.abspath(ref[1])
-            reference_sequence_name = os.path.join('indexes',os.path.basename(ref[1]))
+            ref_data = ref[1][0]
+            reference_sequence = os.path.abspath(ref_data)
+            reference_sequence_name = os.path.join('indexes',os.path.basename(ref_data))
             cmd = f'{libPath}/bin/bowtie2-build {reference_sequence} {reference_sequence_name}'
             cmd = shlex.split(cmd)
             with open(logfile,'a') as outlog:
