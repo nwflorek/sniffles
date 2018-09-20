@@ -112,5 +112,5 @@ def mapping(readData,runCFG,threads='1',ids='',refs=None,jobtype=None):
     with open(logfile,'a') as outlog:
         outlog.write('*******\n')
     #get total runtime
-    runtime = end - start
+    runtime = round(end - start,2)
     print(f'\nSniffles finished mapping in {runtime} seconds')

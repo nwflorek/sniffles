@@ -78,5 +78,5 @@ def trimmomatic(readData,runCFG,threads,ids=''):
     #get time
     end = time.time()
     #determine runtime of processes
-    runtime = end - start
+    runtime = round(end - start,2)
     print(f'\nFinished trimming in {runtime} seconds')

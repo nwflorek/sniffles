@@ -69,7 +69,7 @@ def consensus(readData,runCFG,threads='1',ids=''):
     for id in ids:
         os.remove(f'{outDir}/consensus/{id}.bam')
     end = time.time()
-    runtime = end - start
+    runtime = round(end - start,2)
     print(f'\nSniffles finished pileup in {runtime} seconds')
     start = time.time()
 
@@ -89,7 +89,7 @@ def consensus(readData,runCFG,threads='1',ids=''):
     pool.starmap(proc, [[runCFG,cmds[i],'consensus',outFiles[i]] for i in range(len(cmds))])
 
     end = time.time()
-    runtime = end - start
+    runtime = round(end - start,2)
     print(f'\nSniffles finished generating the VCF in {runtime} seconds')
     start = time.time()
 
@@ -127,7 +127,7 @@ def consensus(readData,runCFG,threads='1',ids=''):
     pool.starmap(proc, [[runCFG,i,'consensus'] for i in idx_cmds])
 
     end = time.time()
-    runtime = end - start
+    runtime = round(end - start,2)
     print(f'\nSniffles finished compressing and indexing in {runtime} seconds')
     start = time.time()
 
@@ -144,7 +144,7 @@ def consensus(readData,runCFG,threads='1',ids=''):
 
     #determine runtime of processes
     end = time.time()
-    runtime = end - overall_start
+    runtime = round(end - overall_start,2)
     print(f'\nSniffles finished generating consensus sequence in {runtime} seconds')
 
     #if mapping reads to consensus is specified run mapping

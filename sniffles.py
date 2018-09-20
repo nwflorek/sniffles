@@ -86,6 +86,6 @@ if cfg['exec']['callSNPs']:
 
 sc.procTitle('Finished Sniffles')
 end = time.time()
-runtime = end - start
+runtime = round(end - start,2)
 runtime = str(datetime.timedelta(seconds=runtime))
 print(f'Sniffles finished with a total runtime of {runtime} seconds')
