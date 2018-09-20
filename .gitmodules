@@ -1,3 +1,0 @@
-[submodule "gitmodules/PyVCF"]
-	path = gitmodules/PyVCF
-	url = https://github.com/jamescasbon/PyVCF.git
