@@ -32,21 +32,21 @@ def mapping(readData,runCFG,threads='1',ids='',refs=None,jobtype=None):
         readData.data['bowtieindexed'] = True
     ref_dict = {}
     if refs:
-        checkexists('indexes')
+        checkexists(f'{outDir}/indexes')
         for ref in refs:
             ref_data = ref[1][0]
-            reference_sequence = os.path.abspath(ref_data)
-            reference_sequence_name = os.path.join('indexes',os.path.basename(ref_data))
+            reference_sequence = ref_data
+            reference_sequence_name = os.path.basename(ref_data)
             cmd = f'{libPath}/bin/bowtie2-build {reference_sequence} {reference_sequence_name}'
             cmd = shlex.split(cmd)
             with open(logfile,'a') as outlog:
                 outlog.write("*************************\n")
                 outlog.write("Bowtie indexing reference\n")
             with open(logfile,'a') as outlog:
-                sub.Popen(cmd,cwd=outDir,stdout=outlog,stderr=outlog).wait()
+                sub.Popen(cmd,cwd=os.path.join(outDir,'indexes'),stdout=outlog,stderr=outlog).wait()
                 outlog.write("*************************\n")
             readData.data['bowtieindexed'] = True
-            ref_dict[ref[0]] = reference_sequence_name
+            ref_dict[ref[0]] = os.path.join(outDir,'indexes',reference_sequence_name)
 
     #generate mapping commands
     cmds = []
