@@ -65,9 +65,24 @@ def consensus(readData,runCFG,threads='1',ids=''):
 
     #start multiprocessing
     pool.starmap(proc, [[runCFG,i] for i in cmds])
+
     #remove temp bam files
     for id in ids:
         os.remove(f'{outDir}/consensus/{id}.bam')
+
+    #remove pileup file if it is empty
+    pile_ids = []
+    for id in ids:
+        try:
+            file = os.path.join(outDir,'consensus',f'{id}.pileup')
+            if not os.path.getsize(file)>0:
+                os.remove(file)
+            else:
+                pile_ids.append(id)
+        except:
+            pass
+    ids = pile_ids
+
     end = time.time()
     runtime = round(end - start,2)
     print(f'\nSniffles finished pileup in {runtime} seconds')
@@ -85,21 +100,16 @@ def consensus(readData,runCFG,threads='1',ids=''):
         cmds.append(cmd)
         o = f'{id}.vcf'
         outFiles.append(o)
+
     #start multiprocessing
     pool.starmap(proc, [[runCFG,cmds[i],'consensus',outFiles[i]] for i in range(len(cmds))])
 
-    end = time.time()
-    runtime = round(end - start,2)
-    print(f'\nSniffles finished generating the VCF in {runtime} seconds')
-    start = time.time()
-
     #check if vcf file is empty, if it is skip id and remove vcf file
+    vcf_ids = []
     for id in ids:
         try:
             vcf_file = os.path.join(outDir,'consensus',f'{id}.vcf')
-            if not os.path.getsize(vcf_file)>0:
-                ids.remove(id)
-            else:
+            if os.path.getsize(vcf_file)>0:
                 empty = True
                 with open(vcf_file,'r') as vcffile:
                     for line in vcffile:
@@ -107,10 +117,19 @@ def consensus(readData,runCFG,threads='1',ids=''):
                         if line and line[0] != '#':
                             empty = False
                 if empty:
-                    ids.remove(id)
                     os.remove(vcf_file)
+                else:
+                    vcf_ids.append(id)
+            else:
+                os.remove(vcf_file)
         except:
-            ids.remove(id)
+            pass
+    ids = vcf_ids
+
+    end = time.time()
+    runtime = round(end - start,2)
+    print(f'\nSniffles finished generating the VCF in {runtime} seconds')
+    start = time.time()
 
     #command list for compressing files
     zip_cmds = []
@@ -138,7 +157,7 @@ def consensus(readData,runCFG,threads='1',ids=''):
         cmd = f'{libPath}/bin/bcftools consensus -f {reference} {outDir}/consensus/{id}.vcf.gz -o {outDir}/consensus/{id}.fasta'
         cmds.append(cmd)
         #add id as finished on tracking
-        readData.addData('consensus',id,outDir + f'{outDir}/consensus/{id}.fasta')
+        readData.addData('consensus',id,f'{outDir}/consensus/{id}.fasta')
     #start multiprocessing
     pool.starmap(proc, [[runCFG,i] for i in cmds])
 
