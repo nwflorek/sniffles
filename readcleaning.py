@@ -25,23 +25,20 @@ def removeDuplicates(readData,runCFG,threads='1',ids=''):
 
     #generate commands
     cmds = []
+    sort_cmds = []
+    checkexists(os.path.join(outDir,'nodups'))
     for id in ids:
-        #sort samfile
-        cmd01 = f'{libPath}/bin/samtools view -b {outDir}/inital_mapping/{id}.sam'
-        cmd01 = shlex.split(cmd01)
-        cmd02 = f'{libPath}/bin/samtools sort -n'
-        cmd02 = shlex.split(cmd02)
-        cmd03 = f'{libPath}/bin/samtools view -h'
-        cmd03 = shlex.split(cmd03)
-        with open(outDir+'/inital_mapping/'+'{id}_sorted.sam'.format(id=id),'w') as outsam:
-            c1 = sub.Popen(cmd01,stdout=sub.PIPE,cwd=outDir)
-            c2 = sub.Popen(cmd02,stdin=c1.stdout,stdout=sub.PIPE,cwd=outDir)
-            c3 = sub.Popen(cmd03,stdin=c2.stdout,stdout=outsam,cwd=outDir)
-            c3.wait()
+        #determine which samfile to use if it has been normalized
+        if id in readData.data['normalized']:
+            samfile = f'{outDir}/normalized_mapping/{id}.sam'
+            cmd = f'{libPath}/bin/samtools view -b {samfile} | samtools sort | samtools view -h > {outDir}/nodups/{id}_pre.sam'
+        else:
+            samfile = f'{outDir}/inital_mapping/{id}.sam'
+            cmd = f'{libPath}/bin/samtools view -b {samfile} | samtools sort | samtools view -h > {outDir}/nodups/{id}_pre.sam'
+        sort_cmds.append(cmd)
 
-        checkexists(os.path.join(outDir,'nodups'))
         #remove duplicate reads command
-        cmd = f'java -Xmx2g -jar {libPath}/picard/picard.jar MarkDuplicates I={outDir}/inital_mapping/{id}_sorted.sam O={outDir}/nodups/{id}.sam REMOVE_DUPLICATES=true M={id}.removeDupMetrics.txt ASSUME_SORT_ORDER=queryname'
+        cmd = f'java -Xmx2g -jar {libPath}/picard/picard.jar MarkDuplicates I={outDir}/nodups/{id}_pre.sam O={outDir}/nodups/{id}.sam REMOVE_DUPLICATES=true M={id}.removeDupMetrics.txt'
         cmds.append(cmd)
 
     #set up multiprocessing
@@ -54,6 +51,7 @@ def removeDuplicates(readData,runCFG,threads='1',ids=''):
         outlog.write('**********************\n')
         outlog.write('Remove Duplicate Reads\n')
     #begin multiprocessing
+    pool.starmap(proc,[[runCFG,i,'','',True] for i in sort_cmds])
     pool.starmap(proc, [[runCFG,i] for i in cmds])
     #get time at end
     end = time.time()
@@ -66,7 +64,7 @@ def removeDuplicates(readData,runCFG,threads='1',ids=''):
     #cleanup
     for id in ids:
         #remove intermediate files
-        os.remove(outDir+'/inital_mapping/'+'{id}_sorted.sam'.format(id=id))
+        os.remove(outDir+'/nodups/'+'{id}_pre.sam'.format(id=id))
         #add id to finished list
         readData.addData('rmDuplicates',id,f'{outDir}/nodups/{id}.sam')
 
@@ -81,24 +79,12 @@ def normCoverage(readData,runCFG,threads='1',ids=''):
         ids = readData.idList
 
     #generate commands
-    bam_cmds = []
     format_cmds = []
     norm_cmds = []
     checkexists(os.path.join(outDir,'normalized'))
     for id in ids:
-        #determine which samfile to use if duplicates have been removed
-        if id in readData.data['rmDuplicates']:
-            samfile = f'{outDir}/nodups/{id}.sam'
-            cmd = f'{libPath}/bin/samtools view -b {samfile} | samtools sort -n > {outDir}/normalized/{id}.bam'
-        else:
-            samfile = f'{outDir}/inital_mapping/{id}.sam'
-            cmd = f'{libPath}/bin/samtools view -b {samfile} | samtools sort -n > {outDir}/normalized/{id}.bam'
-
-        #generate bamfile
-        bam_cmds.append(cmd)
-
-        #get reads from bamfile
-        cmd = f'{libPath}/bin/samtools fastq {outDir}/normalized/{id}.bam -1 {outDir}/normalized/{id}_1.fastq -2 {outDir}/normalized/{id}_2.fastq'
+        #get reads from mapped samfile
+        cmd = f'{libPath}/bin/samtools fastq {outDir}/inital_mapping/{id}.sam -1 {outDir}/normalized/{id}_1.fastq -2 {outDir}/normalized/{id}_2.fastq'
         format_cmds.append(cmd)
 
         #run bbnorm
@@ -123,7 +109,6 @@ def normCoverage(readData,runCFG,threads='1',ids=''):
     lock = mp.Lock()
 
     pool = mp.Pool(processes=threads,initializer=init,initargs=(lock,))
-    pool.starmap(proc,[[runCFG,i,'','',True] for i in bam_cmds])
     pool.starmap(proc, [[runCFG,i] for i in format_cmds])
 
     #NOTE: although normalizing is setup for multiprocessing bbnorm
