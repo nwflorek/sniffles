@@ -7,10 +7,15 @@ from sniffProc import proc,init
 from sc import procTitle,checkexists
 
 def mapping(readData,runCFG,threads='1',ids='',refs=None,jobtype=None):
+    #TODO update this to a better method
+    #determine how many concurrent processes to run at a time
+    concurrency = int(threads / 2)
+
     #inital parameters
     if not refs:
         reference_sequence = os.path.abspath(runCFG['exec']['referenceSequence'])
         reference_sequence_name = os.path.basename(reference_sequence)
+        
     libPath = runCFG['libPath']
     outDir = runCFG['exec']['outdir']
     logfile = os.path.join(outDir,runCFG['exec']['logfile'])
@@ -95,7 +100,7 @@ def mapping(readData,runCFG,threads='1',ids='',refs=None,jobtype=None):
     #set up multiprocessing
     #start multiprocessing
     lock = mp.Lock()
-    pool = mp.Pool(processes=1,initializer=init,initargs=(lock,))
+    pool = mp.Pool(processes=concurrency,initializer=init,initargs=(lock,))
     #notify starting mapping
     procTitle('Read Mapping')
     print('\nSniffles: Started mapping')
