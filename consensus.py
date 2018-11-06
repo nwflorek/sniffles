@@ -41,10 +41,10 @@ def consensus(readData,runCFG,threads='1',ids=''):
     for id in ids:
         #determine samfile that will be used
         #no read cleaning
-        if runCFG['exec']['normalizeCoverage']:
-            samfile = f'{outDir}/normalized_mapping/{id}.sam'
-        elif runCFG['exec']['removeDupReads']:
+        if runCFG['exec']['removeDupReads']:
             samfile = f'{outDir}/nodups/{id}.sam'
+        elif runCFG['exec']['normalizeCoverage']:
+            samfile = f'{outDir}/normalized_mapping/{id}.sam'
         else:
             samfile = f'{outDir}/inital_mapping/{id}.sam'
 
