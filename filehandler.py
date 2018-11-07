@@ -16,6 +16,8 @@ class reads:
     data['mapProgress']['normalized'] = []
     data['mapProgress']['trimmed'] = []
     data['mapProgress']['consensus'] = []
+    data['mapData'] = {}
+    data['mapData']['avgDepth'] = {}
 
     #trimming progress tracker
     data['trimmed'] = {}

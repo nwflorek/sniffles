@@ -67,9 +67,13 @@ trimmomatic(readData,cfg,numThreads)
 
 #begin mapping
 mapping(readData,cfg,numThreads,jobtype='map-trimmed')
+#report maping average depth
+with open(os.path.join(cfg['exec']['outdir'],'average_depth.log'),'w') as outdepth:
+    for key in readData.data['mapData']['avgDepth']:
+        avgdepth = readData.data['mapData']['avgDepth'][key]
+        outdepth.write(f'{key},{avgdepth}\n')
 
 #datacleaning
-
 #normalize coverage
 if cfg['exec']['normalizeCoverage']:
     rc.normCoverage(readData,cfg,numThreads)

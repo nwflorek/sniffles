@@ -5,6 +5,7 @@ import multiprocessing as mp
 import time
 from sniffProc import proc,init
 from sc import procTitle,checkexists
+from readdepth import average_depth
 
 def mapping(readData,runCFG,threads='1',ids='',refs=None,jobtype=None):
     #TODO update this to a better method
@@ -55,6 +56,7 @@ def mapping(readData,runCFG,threads='1',ids='',refs=None,jobtype=None):
 
     #generate mapping commands
     cmds = []
+    check_depth = False
     for id in ids:
         #setup for multiple references
         if ref_dict:
@@ -72,6 +74,7 @@ def mapping(readData,runCFG,threads='1',ids='',refs=None,jobtype=None):
             #generate command
             cmd = f"{libPath}/bin/bowtie2 -x {reference_sequence_name} -1 {reads[0]} -2 {reads[1]} -p 2 --local | {libPath}/bin/samtools view -bS - | {libPath}/bin/samtools sort > {outDir}/inital_mapping/{id}.bam"
             cmds.append(cmd)
+            check_depth = True
 
         elif 'map-normalized' == jobtype:
             #get read path from tracker
@@ -112,6 +115,17 @@ def mapping(readData,runCFG,threads='1',ids='',refs=None,jobtype=None):
     start = time.time()
     #start multiprocessing
     pool.starmap(proc, [[runCFG,i,'','',True] for i in cmds])
+    #determine average depth for each isolate
+    if check_depth:
+        passingDepth = []
+        for id in ids:
+            depth = average_depth(f'{outDir}/inital_mapping/{id}.bam')
+            readData.data['mapData']['avgDepth'][id] = depth
+            #only keep isolates that pass the minimumaveragedepth
+            if int(float(depth)) >= runCFG['exec']['minimumAverageDepth']:
+                passingDepth.append(id)
+        readData.idList = passingDepth
+
     #get end time
     end = time.time()
     #denote end of mapping in log
