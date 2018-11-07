@@ -120,6 +120,9 @@ def mapping(readData,runCFG,threads='1',ids='',refs=None,jobtype=None):
         passingDepth = []
         for id in ids:
             depth = average_depth(f'{outDir}/inital_mapping/{id}.bam')
+            if 'error' in depth:
+                readData.data['mapData']['avgDepth'][id] = depth
+                continue
             readData.data['mapData']['avgDepth'][id] = depth
             #only keep isolates that pass the minimumaveragedepth
             if int(float(depth)) >= runCFG['exec']['minimumAverageDepth']:

@@ -11,5 +11,9 @@ def average_depth(path):
 
     p = sub.Popen(cmd,shell=True,stdout=sub.PIPE,stderr=sub.PIPE)
     out,err = p.communicate()
-    depth = out.decode('utf-8').strip().split(':')[1][1:]
+    try:
+        depth = out.decode('utf-8').strip().split(':')[1][1:]
+    except IndexError:
+        o = out.decode('utf-8')
+        return f'error: {o}'
     return depth
