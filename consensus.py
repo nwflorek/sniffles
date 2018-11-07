@@ -38,32 +38,22 @@ def consensus(readData,runCFG,threads='1',ids=''):
 
     #command list for generating mpileups
     cmds = []
-    sort_cmds = []
     for id in ids:
         #determine samfile that will be used
         #no read cleaning
         if runCFG['exec']['removeDupReads']:
-            samfile = f'{outDir}/nodups/{id}.sam'
+            bamfile = f'{outDir}/nodups/{id}.bam'
         elif runCFG['exec']['normalizeCoverage']:
-            samfile = f'{outDir}/normalized_mapping/{id}.sam'
+            bamfile = f'{outDir}/normalized_mapping/{id}.bam'
         else:
-            samfile = f'{outDir}/inital_mapping/{id}.sam'
-
-        #convert sam to sorted bam file
-        sort_cmd = f'{libPath}/bin/samtools view -b {samfile} | samtools sort > {outDir}/consensus/{id}.bam'
-        sort_cmds.append(sort_cmd)
+            bamfile = f'{outDir}/inital_mapping/{id}.bam'
 
         #make multiway pileup using samtools
-        cmd = f'{libPath}/bin/samtools mpileup -d 1000000 {outDir}/consensus/{id}.bam -f {reference} -o {outDir}/consensus/{id}.pileup'
+        cmd = f'{libPath}/bin/samtools mpileup -d 1000000 {bamfile} -f {reference} -o {outDir}/consensus/{id}.pileup'
         cmds.append(cmd)
 
     #start multiprocessing
-    pool.starmap(proc, [[runCFG,i,'','',True] for i in sort_cmds])
     pool.starmap(proc, [[runCFG,i] for i in cmds])
-
-    #remove temp bam files
-    for id in ids:
-        os.remove(f'{outDir}/consensus/{id}.bam')
 
     #remove pileup file if it is empty
     pile_ids = []

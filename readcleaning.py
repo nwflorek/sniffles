@@ -25,20 +25,17 @@ def removeDuplicates(readData,runCFG,threads='1',ids=''):
 
     #generate commands
     cmds = []
-    sort_cmds = []
     checkexists(os.path.join(outDir,'nodups'))
     for id in ids:
-        #determine which samfile to use if it has been normalized
+        #determine which bamfile to use if it has been normalized
         if id in readData.data['normalized']:
-            samfile = f'{outDir}/normalized_mapping/{id}.sam'
-            cmd = f'{libPath}/bin/samtools view -b {samfile} | samtools sort | samtools view -h > {outDir}/nodups/{id}_pre.sam'
+            bamfile = f'{outDir}/normalized_mapping/{id}.bam'
+
         else:
-            samfile = f'{outDir}/inital_mapping/{id}.sam'
-            cmd = f'{libPath}/bin/samtools view -b {samfile} | samtools sort | samtools view -h > {outDir}/nodups/{id}_pre.sam'
-        sort_cmds.append(cmd)
+            bamfile = f'{outDir}/inital_mapping/{id}.bam'
 
         #remove duplicate reads command
-        cmd = f'java -Xmx2g -jar {libPath}/picard/picard.jar MarkDuplicates I={outDir}/nodups/{id}_pre.sam O={outDir}/nodups/{id}.sam REMOVE_DUPLICATES=true M={id}.removeDupMetrics.txt'
+        cmd = f'java -Xmx2g -jar {libPath}/picard/picard.jar MarkDuplicates I={bamfile} O={outDir}/nodups/{id}.bam REMOVE_DUPLICATES=true M={id}.removeDupMetrics.txt'
         cmds.append(cmd)
 
     #set up multiprocessing
@@ -51,7 +48,6 @@ def removeDuplicates(readData,runCFG,threads='1',ids=''):
         outlog.write('**********************\n')
         outlog.write('Remove Duplicate Reads\n')
     #begin multiprocessing
-    pool.starmap(proc,[[runCFG,i,'','',True] for i in sort_cmds])
     pool.starmap(proc, [[runCFG,i] for i in cmds])
     #get time at end
     end = time.time()
@@ -63,10 +59,8 @@ def removeDuplicates(readData,runCFG,threads='1',ids=''):
 
     #cleanup
     for id in ids:
-        #remove intermediate files
-        os.remove(outDir+'/nodups/'+'{id}_pre.sam'.format(id=id))
         #add id to finished list
-        readData.addData('rmDuplicates',id,f'{outDir}/nodups/{id}.sam')
+        readData.addData('rmDuplicates',id,f'{outDir}/nodups/{id}.bam')
 
 def normCoverage(readData,runCFG,threads='1',ids=''):
     #inital parameters
@@ -83,8 +77,8 @@ def normCoverage(readData,runCFG,threads='1',ids=''):
     norm_cmds = []
     checkexists(os.path.join(outDir,'normalized'))
     for id in ids:
-        #get reads from mapped samfile
-        cmd = f'{libPath}/bin/samtools fastq {outDir}/inital_mapping/{id}.sam -1 {outDir}/normalized/{id}_1.fastq -2 {outDir}/normalized/{id}_2.fastq'
+        #get reads from mapped bamfile
+        cmd = f'{libPath}/bin/samtools fastq {outDir}/inital_mapping/{id}.bam -1 {outDir}/normalized/{id}_1.fastq -2 {outDir}/normalized/{id}_2.fastq'
         format_cmds.append(cmd)
 
         #run bbnorm
@@ -127,8 +121,8 @@ def normCoverage(readData,runCFG,threads='1',ids=''):
 
     #cleanup
     for id in ids:
-        #os.remove(f'{outDir}/normalized/{id}_1.fastq')
-        #os.remove(f'{outDir}/normalized/{id}_2.fastq')
+        os.remove(f'{outDir}/normalized/{id}_1.fastq')
+        os.remove(f'{outDir}/normalized/{id}_2.fastq')
         #add to tracker
         readData.addData('normalized',id,f'{outDir}/normalized/{id}_normalized.fastq')
 

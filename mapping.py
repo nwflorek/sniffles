@@ -15,7 +15,7 @@ def mapping(readData,runCFG,threads='1',ids='',refs=None,jobtype=None):
     if not refs:
         reference_sequence = os.path.abspath(runCFG['exec']['referenceSequence'])
         reference_sequence_name = os.path.basename(reference_sequence)
-        
+
     libPath = runCFG['libPath']
     outDir = runCFG['exec']['outdir']
     logfile = os.path.join(outDir,runCFG['exec']['logfile'])
@@ -70,7 +70,7 @@ def mapping(readData,runCFG,threads='1',ids='',refs=None,jobtype=None):
             #check output folder exists
             checkexists(os.path.join(outDir,'inital_mapping'))
             #generate command
-            cmd = f"{libPath}/bin/bowtie2 -x {reference_sequence_name} -1 {reads[0]} -2 {reads[1]} -S {outDir}/inital_mapping/{id}.sam -p 2 --local"
+            cmd = f"{libPath}/bin/bowtie2 -x {reference_sequence_name} -1 {reads[0]} -2 {reads[1]} -p 2 --local | {libPath}/bin/samtools view -bS - | {libPath}/bin/samtools sort > {outDir}/inital_mapping/{id}.bam"
             cmds.append(cmd)
 
         elif 'map-normalized' == jobtype:
@@ -80,7 +80,7 @@ def mapping(readData,runCFG,threads='1',ids='',refs=None,jobtype=None):
             readData.data['mapProgress']['normalized'].append(id)
             #check output folder exists
             checkexists(os.path.join(outDir,'normalized_mapping'))
-            cmd = f"{libPath}/bin/bowtie2 -x {reference_sequence_name} --interleaved {reads[0]} -S {outDir}/normalized_mapping/{id}.sam -p 2 --local"
+            cmd = f"{libPath}/bin/bowtie2 -x {reference_sequence_name} --interleaved {reads[0]} -p 2 --local | {libPath}/bin/samtools view -bS - | {libPath}/bin/samtools sort > {outDir}/normalized_mapping/{id}.bam"
             cmds.append(cmd)
 
         elif 'map-consensus' == jobtype:
@@ -91,7 +91,7 @@ def mapping(readData,runCFG,threads='1',ids='',refs=None,jobtype=None):
             #check output folder exists
             checkexists(os.path.join(outDir,'consensus_mapping'))
             #generate command
-            cmd = f"{libPath}/bin/bowtie2 -x {reference_sequence_name} -1 {reads[0]} -2 {reads[1]} -S {outDir}/consensus_mapping/{id}.sam -p 2 --local"
+            cmd = f"{libPath}/bin/bowtie2 -x {reference_sequence_name} -1 {reads[0]} -2 {reads[1]} -p 2 --local | {libPath}/bin/samtools view -bS - | {libPath}/bin/samtools sort > {outDir}/consensus_mapping/{id}.bam"
             cmds.append(cmd)
         else:
             print(f'There was an error mapping {id}.')
@@ -111,7 +111,7 @@ def mapping(readData,runCFG,threads='1',ids='',refs=None,jobtype=None):
     #get start time
     start = time.time()
     #start multiprocessing
-    pool.starmap(proc, [[runCFG,i] for i in cmds])
+    pool.starmap(proc, [[runCFG,i,'','',True] for i in cmds])
     #get end time
     end = time.time()
     #denote end of mapping in log
