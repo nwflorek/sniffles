@@ -1,12 +1,6 @@
 #!/usr/bin/env python3
 
 import os
-import argparse
-import glob
-import re
-import sys
-from staphB_ToolKit.core import basemount
-
 
 #class for containing all sequencing run information
 class RunFiles:
@@ -43,19 +37,10 @@ class RunFiles:
     #data dictonary for containing runtime information
     runtime = {}
 
-    def __init__(self,path, output_dir=''):
+    def __init__(self,path):
         #Ensure input path exisits
         if not os.path.isdir(path):
-            raise ValueError(path + " " + "not found.")
-
-        if not output_dir:
-            output_dir = os.getcwd()
-
-        if os.path.isdir(path+"/AppResults"):
-            basemount_project = basemount.Basemount(path, output_dir)
-            basemount_project.copy_reads()
-            path = output_dir
-
+            raise ValueError("Input path: "+ path +" not found.");
 
         for root,dirs,files in os.walk(path):
             #scan path and look for fastq files then gather ids and store in temp lists
@@ -107,7 +92,7 @@ class RunFiles:
                 output_list.append(self.reads[id].path)
         return output_list
 
-    #function to add runtime data to class **may get depreciated**
+    #function to add runtime data to class
     def add_runtime(self,data_type,id,*path):
         if data_type not in self.runtime:
             self.runtime[data_type] = {}

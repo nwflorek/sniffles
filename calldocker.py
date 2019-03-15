@@ -6,9 +6,10 @@
 #stripped down docker calling function
 
 import docker
-import os
+import os, sys
+import time
 
-def call(container='nwflorek/sniffles_tools',command,cwd='',paths={},remove=True):
+def call(command,cwd='',paths={},container='nwflorek/sniffles_tools',remove=True):
     ###access docker environment
     client = docker.from_env()
 

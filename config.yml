@@ -38,12 +38,13 @@ exec:
   subsampleSlidingWindowpiNpiS: False
 
   #Reference sequence for mapping
-  referenceSequence: "A_HongKong_4801_2014.fasta"
+  referenceSequence: "A_HongKong_4801_2014_HA.fasta"
 
 #Trimming
 trimmomatic:
   removeAdapters: False
-  adaptersPath: "lib/trimmomatic/adapters/Nextera_XT_adapter.fa"
+  #adapter file name included in trimmomatic
+  adaptersFileName: "Nextera_XT_adapter.fa"
   #paired end reads
   paired: True
   #post trimming length
