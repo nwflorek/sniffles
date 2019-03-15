@@ -36,14 +36,14 @@ def trim(readData,runCFG,threads,ids=''):
         if runCFG['trimmomatic']['removeAdapters']:
             if runCFG['trimmomatic']['paired']:
                 args = f'PE {read1_basename} {read2_basename} -baseout /output/{id}_trimmed.fastq.gz ILLUMINACLIP:{adapterpath}:1:30:10 SLIDINGWINDOW:{windowsize}:{qscore} MINLEN:{minlength}'
-                readData.add_runtime('trimmed',id,f'{outDir}/trimmed/{id}_trimmed_1P.fastq.gz',f'trimmed/{id}_trimmed_2P.fastq.gz')
+                readData.add_runtime('trimmed',id,f'{outDir}/trimmed/{id}_trimmed_1P.fastq.gz',f'{outDir}/trimmed/{id}_trimmed_2P.fastq.gz')
             else:
                 args = f'SE {read1_basename} -baseout /output/{id}_trimmed.fastq.gz ILLUMINACLIP:{adapterpath}:1:30:10 SLIDINGWINDOW:{windowsize}:{qscore} MINLEN:{minlength}'
                 readData.add_runtime('trimmed',id,f'{outDir}/trimmed/{id}_trimmed.fastq.gz')
         else:
             if runCFG['trimmomatic']['paired']:
                 args = f'PE {read1_basename} {read2_basename} -baseout /output/{id}_trimmed.fastq.gz SLIDINGWINDOW:{windowsize}:{qscore} MINLEN:{minlength}'
-                readData.add_runtime('trimmed',id,f'{outDir}/trimmed/{id}_trimmed_1P.fastq.gz',f'trimmed/{id}_trimmed_2P.fastq.gz')
+                readData.add_runtime('trimmed',id,f'{outDir}/trimmed/{id}_trimmed_1P.fastq.gz',f'{outDir}/trimmed/{id}_trimmed_2P.fastq.gz')
             else:
                 args = f'SE {read1_basename} -baseout /output/{id}_trimmed.fastq.gz SLIDINGWINDOW:{windowsize}:{qscore} MINLEN:{minlength}'
                 readData.add_runtime('trimmed',id,f'{outDir}/trimmed/{id}_trimmed.fastq.gz')
