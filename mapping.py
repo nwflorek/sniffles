@@ -3,118 +3,83 @@ import shlex
 import subprocess as sub
 import multiprocessing as mp
 import time
-from sniffProc import proc,init
-from sc import procTitle,checkexists
+from sc import procTitle,checkexists,cpu_count
+import calldocker as cd
 from readdepth import average_depth
+from shutil import copyfile
 
-def mapping(readData,runCFG,threads='1',ids='',refs=None,jobtype=None):
-    #TODO update this to a better method
-    #determine how many concurrent processes to run at a time
-    concurrency = int(threads / 2)
-
-    #inital parameters
-    if not refs:
-        reference_sequence = os.path.abspath(runCFG['exec']['referenceSequence'])
-        reference_sequence_name = os.path.basename(reference_sequence)
-
-    libPath = runCFG['libPath']
-    outDir = runCFG['exec']['outdir']
-    logfile = os.path.join(outDir,runCFG['exec']['logfile'])
-
-    #use id if provided otherwise get list
-    if not ids:
-        ids = readData.idList
-
-    #index reference
-    if 'bowtieindexed' not in readData.data:
-        cmd = f'{libPath}/bin/bowtie2-build {reference_sequence} {reference_sequence_name}'
-        cmd = shlex.split(cmd)
+def indexing(runCFG,*paths):
+    logfile = os.path.join(runCFG['exec']['outdir'],runCFG['exec']['logfile'])
+    outDir = runCFG['exec']['outdir'] + '/ref_sequence'
+    os.mkdir(outDir)
+    procTitle('Indexing Reference Genome')
+    for path in paths:
+        reference_sequence_abspath = os.path.abspath(path)
+        reference_sequence_name = os.path.basename(reference_sequence_abspath)
+        #index reference
+        cmd = f'bowtie2-build {reference_sequence_name} {reference_sequence_name}'
         with open(logfile,'a') as outlog:
             outlog.write("*************************\n")
-            outlog.write("Bowtie indexing reference\n")
-        with open(logfile,'a') as outlog:
-            sub.Popen(cmd,cwd=outDir,stdout=outlog,stderr=outlog).wait()
+            outlog.write("Bowtie2 indexing the reference\n")
+            copyfile(reference_sequence_abspath,os.path.join(outDir,reference_sequence_name))
+            outlog.write(cd.call(cmd,'/data',{outDir:"/data"}))
             outlog.write("*************************\n")
-        readData.data['bowtieindexed'] = True
-    ref_dict = {}
-    if refs:
-        checkexists(f'{outDir}/indexes')
-        for ref in refs:
-            ref_data = ref[1][0]
-            reference_sequence = ref_data
-            reference_sequence_name = os.path.basename(ref_data)
-            cmd = f'{libPath}/bin/bowtie2-build {reference_sequence} {reference_sequence_name}'
-            cmd = shlex.split(cmd)
-            with open(logfile,'a') as outlog:
-                outlog.write("*************************\n")
-                outlog.write("Bowtie indexing reference\n")
-            with open(logfile,'a') as outlog:
-                sub.Popen(cmd,cwd=os.path.join(outDir,'indexes'),stdout=outlog,stderr=outlog).wait()
-                outlog.write("*************************\n")
-            readData.data['bowtieindexed'] = True
-            ref_dict[ref[0]] = os.path.join(outDir,'indexes',reference_sequence_name)
 
-    #generate mapping commands
+#mapping parameters
+#param_path - list of paths in the following order
+#   [(id,path to fwd read, path to rev read, path to reference),...]
+#   if not paired end then "path to rev read" will be empty
+#threads - number of threads for bowtie2
+#outDir - the output directory
+def mapping(runCFG,param_paths,outDir,threads='1'):
+
+    logfile = os.path.join(runCFG['exec']['outdir'],runCFG['exec']['logfile'])
+
+    num_jobs,num_threads = cpu_count(threads)
+
     cmds = []
-    check_depth = False
-    for id in ids:
-        #setup for multiple references
-        if ref_dict:
-            reference_sequence_name = ref_dict[id]
+    read_path = ''
+    ref_path = ''
+    for param_path in param_paths:
+        id = param_path[0]
+        read1 = os.path.basename(param_path[1])
+        read2 = os.path.basename(param_path[2])
+        read_path = os.path.dirname(os.path.abspath(param_path[1]))
+        ref_path = runCFG['exec']['outdir'] + '/ref_sequence'
+        reference_sequence_name = os.path.basename(param_path[3])
 
-        #determine jobtype and generate mapping command
-        if 'map-trimmed' == jobtype:
-            #TODO add status for unpaired read information
-            #get read paths from readdata object (stored by trim)
-            reads = [readData.data['trimmed'][id][0],readData.data['trimmed'][id][1]]
-            #add id to progress tracker
-            readData.data['mapProgress']['trimmed'].append(id)
-            #check output folder exists
-            checkexists(os.path.join(outDir,'inital_mapping'))
-            #generate command
-            cmd = f"{libPath}/bin/bowtie2 -x {reference_sequence_name} -1 {reads[0]} -2 {reads[1]} -p 2 --local | {libPath}/bin/samtools view -bS - | {libPath}/bin/samtools sort > {outDir}/inital_mapping/{id}.bam"
-            cmds.append(cmd)
-            check_depth = True
-
-        elif 'map-normalized' == jobtype:
-            #get read path from tracker
-            reads = readData.data['normalized'][id]
-            #add ids to mapping tracker
-            readData.data['mapProgress']['normalized'].append(id)
-            #check output folder exists
-            checkexists(os.path.join(outDir,'normalized_mapping'))
-            cmd = f"{libPath}/bin/bowtie2 -x {reference_sequence_name} --interleaved {reads[0]} -p 2 --local | {libPath}/bin/samtools view -bS - | {libPath}/bin/samtools sort > {outDir}/normalized_mapping/{id}.bam"
-            cmds.append(cmd)
-
-        elif 'map-consensus' == jobtype:
-            #get reads path from tracker
-            reads = [readData.data['trimmed'][id][0],readData.data['trimmed'][id][1]]
-            #add ids to mapping tracker
-            readData.data['mapProgress']['normalized'].append(id)
-            #check output folder exists
-            checkexists(os.path.join(outDir,'consensus_mapping'))
-            #generate command
-            cmd = f"{libPath}/bin/bowtie2 -x {reference_sequence_name} -1 {reads[0]} -2 {reads[1]} -p 2 --local | {libPath}/bin/samtools view -bS - | {libPath}/bin/samtools sort > {outDir}/consensus_mapping/{id}.bam"
-            cmds.append(cmd)
-        else:
-            print(f'There was an error mapping {id}.')
-            exit()
+        #check output folder exists
+        checkexists(os.path.join(outDir))
+        #generate command
+        cmd = f"bash -c \'bowtie2 -x {reference_sequence_name} -1 /reads/{read1} -2 /reads/{read2} -p {num_threads} --local | samtools view -bS | samtools sort -o /output/{id}.bam\'"
+        cmds.append(cmd)
 
     #set up multiprocessing
     #start multiprocessing
-    lock = mp.Lock()
-    pool = mp.Pool(processes=concurrency,initializer=init,initargs=(lock,))
+    pool = mp.Pool(processes=num_jobs)
     #notify starting mapping
-    procTitle('Read Mapping')
+    procTitle('Mapping Reads')
     print('\nSniffles: Started mapping')
-    #denote start of mapping in logs
-    with open(logfile,'a') as outlog:
-        outlog.write('*******\n')
-        outlog.write('Mapping\n')
     #get start time
     start = time.time()
-    #start multiprocessing
-    pool.starmap(proc, [[runCFG,i,'','',True] for i in cmds])
+    #denote start of mapping in logs
+    with open(logfile,'a') as outlog:
+        outlog.write('***********\n')
+        outlog.write('Mapping\n')
+        #start multiprocessing
+        results = pool.starmap_async(cd.call,[[cmd,'/reads',{ref_path:"/reference",read_path:"/reads",outDir:"/output"}] for cmd in cmds])
+        stdouts = results.get()
+        for stdout in stdouts:
+            outlog.write('-----------\n')
+            outlog.write(stdout)
+        #denote end of logs
+        outlog.write('***********\n')
+    #get end time
+    end = time.time()
+    #get total runtime
+    runtime = round(end - start,2)
+    print(f'\nSniffles finished mapping in {runtime} seconds')
+'''
     #determine average depth for each isolate
     if check_depth:
         passingDepth = []
@@ -128,12 +93,4 @@ def mapping(readData,runCFG,threads='1',ids='',refs=None,jobtype=None):
             if int(float(depth)) >= runCFG['exec']['minimumAverageDepth']:
                 passingDepth.append(id)
         readData.idList = passingDepth
-
-    #get end time
-    end = time.time()
-    #denote end of mapping in log
-    with open(logfile,'a') as outlog:
-        outlog.write('*******\n')
-    #get total runtime
-    runtime = round(end - start,2)
-    print(f'\nSniffles finished mapping in {runtime} seconds')
+'''
