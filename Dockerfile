@@ -16,11 +16,12 @@ MAINTAINER Nicholas Florek <nicholas.florek@slh.wisc.edu>
 RUN apt-get update && apt-get install -y software-properties-common &&\
 add-apt-repository -y ppa:openjdk-r/ppa && apt-get update && apt-get install -y \
  curl\
+ python\
  build-essential\
  openjdk-11-jre\
  zip\
  libz-dev\
- libbz2-dev\ 
+ libbz2-dev\
  liblzma-dev\
  libncurses5-dev
 
