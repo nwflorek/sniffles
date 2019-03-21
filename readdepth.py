@@ -14,4 +14,4 @@ def average_depth(file):
     else:
         return f'error: {bam} is not a bam file'
     out = cd.call(cmd,'/data',{path:"/data"})
-    return out
+    return out.strip()
