@@ -5,7 +5,6 @@ import multiprocessing as mp
 import time
 from sc import procTitle,checkexists,cpu_count
 import calldocker as cd
-from readdepth import average_depth
 from shutil import copyfile
 
 def indexing(runCFG,*paths):
