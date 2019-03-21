@@ -82,4 +82,4 @@ def trim(readData,runCFG,threads,ids=''):
     end = time.time()
     #determine runtime of processes
     runtime = round(end - start,2)
-    print(f'\nFinished trimming in {runtime} seconds')
+    print(f'\nSniffles: Finished trimming in {runtime} seconds')
