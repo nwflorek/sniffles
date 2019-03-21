@@ -78,19 +78,16 @@ def mapping(runCFG,param_paths,outDir,threads='1'):
     end = time.time()
     #get total runtime
     runtime = round(end - start,2)
-    print(f'\nSniffles finished mapping in {runtime} seconds')
-'''
-    #determine average depth for each isolate
-    if check_depth:
-        passingDepth = []
-        for id in ids:
-            depth = average_depth(f'{outDir}/inital_mapping/{id}.bam')
-            if 'error' in depth:
-                readData.data['mapData']['avgDepth'][id] = depth
-                continue
-            readData.data['mapData']['avgDepth'][id] = depth
-            #only keep isolates that pass the minimumaveragedepth
-            if int(float(depth)) >= runCFG['exec']['minimumAverageDepth']:
-                passingDepth.append(id)
-        readData.idList = passingDepth
-'''
+    print(f'\nSniffles: Finished mapping in {runtime} seconds')
+
+def average_depth(file):
+    abs_path = os.path.abspath(file)
+    path = os.path.dirname(abs_path)
+    bam = os.path.basename(abs_path)
+
+    if '.bam' in bam:
+        cmd = f'bash -c "samtools depth -a {bam} | awk \'{{sum+=$3}} END {{ print sum/NR}}\'"'
+    else:
+        return f'error: {bam} is not a bam file'
+    out = cd.call(cmd,'/data',{path:"/data"})
+    return out.strip()
