@@ -39,6 +39,7 @@ def mapping(runCFG,param_paths,outDir,threads='1'):
     cmds = []
     read_path = ''
     ref_path = ''
+    output_bam_list = []
     for param_path in param_paths:
         id = param_path[0]
         read1 = os.path.basename(param_path[1])
@@ -52,6 +53,9 @@ def mapping(runCFG,param_paths,outDir,threads='1'):
         #generate command
         cmd = f"bash -c \'bowtie2 -x {reference_sequence_name} -1 /reads/{read1} -2 /reads/{read2} -p {num_threads} --local | samtools view -bS | samtools sort -o /output/{id}.bam\'"
         cmds.append(cmd)
+
+        #data for next stage
+        output_bam_list.append(os.path.join(outDir,f'{id}.bam')
 
     #set up multiprocessing
     #start multiprocessing
@@ -78,6 +82,7 @@ def mapping(runCFG,param_paths,outDir,threads='1'):
     #get total runtime
     runtime = round(end - start,2)
     print(f'\nSniffles: Finished mapping in {runtime} seconds')
+    return output_bam_list
 
 def average_depth(file):
     abs_path = os.path.abspath(file)
