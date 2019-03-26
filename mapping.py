@@ -55,7 +55,7 @@ def mapping(runCFG,param_paths,outDir,threads='1'):
         cmds.append(cmd)
 
         #data for next stage
-        output_bam_list.append(os.path.join(outDir,f'{id}.bam')
+        output_bam_list.append(os.path.join(outDir,f'{id}.bam'))
 
     #set up multiprocessing
     #start multiprocessing
