@@ -21,7 +21,7 @@ add-apt-repository -y ppa:openjdk-r/ppa && apt-get update && apt-get install -y 
  openjdk-11-jre\
  zip\
  libz-dev\
- libbz2-dev\
+ libbz2-dev\ 
  liblzma-dev\
  libncurses5-dev
 
@@ -67,5 +67,18 @@ RUN curl -L 'ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.7.1/ncbi-blas
  tar -xzf ncbi-blast.tar.gz &&\
  mv ncbi-blast-2.7.1+/bin/* usr/bin &&\
  rm -r /ncbi-blast.tar.gz /ncbi-blast-2.7.1+/
+
+#install bbtools
+RUN curl -L 'https://downloads.sourceforge.net/project/bbmap/BBMap_38.43.tar.gz' -o BBMap_38.43.tar.gz &&\
+ tar -xzf BBMap_38.43.tar.gz &&\
+ mv bbmap /tools/bbmap &&\
+ rm -r BBMap_38.43.tar.gz
+
+#install lofreq
+RUN curl -L 'https://github.com/CSB5/lofreq/raw/master/dist/lofreq_star-2.1.3.1_linux-x86-64.tgz' -o lofreq_star-2.1.3.1_linux-x86-64.tgz &&\
+ tar -xzf lofreq_star-2.1.3.1_linux-x86-64.tgz &&\
+ cd lofreq_star-2.1.3.1 && cd bin &&\
+ mv * /usr/bin &&\
+ rm -r /lofreq_star-2.1.3.1_linux-x86-64.tgz /lofreq_star-2.1.3.1
 
 WORKDIR /data
