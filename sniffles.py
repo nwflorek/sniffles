@@ -121,7 +121,7 @@ if cfg['exec']['generateConsensus']:
     #map reads to consensus
     if cfg['exec']['mapToConsensus']:
         mapping_list = []
-        indexing(cfg,fasta_list)
+        indexing(cfg,*fasta_list)
         for id in readData.runtime['trimmed']:
             for fasta in fasta_list:
                 fasta_id = os.path.basename(fasta).split('_')[0]
