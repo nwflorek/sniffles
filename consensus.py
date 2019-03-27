@@ -16,10 +16,12 @@ def consensus(runCFG,bam_list,threads='1'):
     #notify starting mapping
     procTitle('Generate Consensus')
     print('\nSniffles: Started generating consensus vcf')
+
     #get start time
     overall_start = time.time()
     start = time.time()
-    #set reference sequence and begin
+
+    #set reference sequence
     reference_sequence_abspath = os.path.abspath(runCFG['exec']['referenceSequence'])
     reference_sequence_name = os.path.basename(reference_sequence_abspath)
     reference_sequence_dir = os.path.dirname(reference_sequence_abspath)

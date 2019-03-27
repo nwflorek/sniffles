@@ -1,7 +1,4 @@
-#!/usr/bin/env python3
-#!/usr/bin/env python3
-
-#author: Nick Florek
+#author: Kelsey Florek
 #email: nicholas.florek@slh.wisc.edu
 #stripped down docker calling function
 

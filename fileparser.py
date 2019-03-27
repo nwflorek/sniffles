@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import os
 
 #class for containing all sequencing run information
