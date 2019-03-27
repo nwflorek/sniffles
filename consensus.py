@@ -2,158 +2,113 @@ import os
 import shlex
 import subprocess as sub
 import time
-from sniffProc import proc,init
 from sc import procTitle,checkexists
-from mapping import mapping
 import multiprocessing as mp
+import calldocker as cd
 
-def consensus(readData,runCFG,threads='1',ids=''):
-    #easy const access
-    libPath = runCFG['libPath']
+def consensus(runCFG,bam_list,threads='1'):
+    #inital parameters
     outDir =runCFG['exec']['outdir']
     logfile = os.path.join(outDir,runCFG['exec']['logfile'])
-
-    #if no id supplied get list of all ids
-    if not ids:
-        ids = readData.idList
-
-    #if no consensus dir exists create one
-    try:
-        os.mkdir(os.path.join(outDir,'consensus'))
-    except:
-        pass
+    outDir = os.path.join(outDir,'consensus')
+    checkexists(outDir)
 
     #notify starting mapping
     procTitle('Generate Consensus')
-    print('\nSniffles: Started generating consensus sequence')
+    print('\nSniffles: Started generating consensus vcf')
     #get start time
     overall_start = time.time()
     start = time.time()
     #set reference sequence and begin
-    reference = runCFG['exec']['referenceSequence']
+    reference_sequence_abspath = os.path.abspath(runCFG['exec']['referenceSequence'])
+    reference_sequence_name = os.path.basename(reference_sequence_abspath)
+    reference_sequence_dir = os.path.dirname(reference_sequence_abspath)
 
-    #setup multiprocessing
-    lock = mp.Lock()
-    pool = mp.Pool(processes=threads,initializer=init,initargs=(lock,))
-
-    #command list for generating mpileups
+    #command list
     cmds = []
-    for id in ids:
-        #determine samfile that will be used
-        #no read cleaning
-        if runCFG['exec']['removeDupReads']:
-            bamfile = f'{outDir}/nodups/{id}.bam'
-        elif runCFG['exec']['normalizeCoverage']:
-            bamfile = f'{outDir}/normalized_mapping/{id}.bam'
-        else:
-            bamfile = f'{outDir}/inital_mapping/{id}.bam'
-
-        #make multiway pileup using samtools
-        cmd = f'{libPath}/bin/samtools mpileup -d 1000000 {bamfile} -f {reference} -o {outDir}/consensus/{id}.pileup'
-        cmds.append(cmd)
-
-    #start multiprocessing
-    pool.starmap(proc, [[runCFG,i] for i in cmds])
-
-    #remove pileup file if it is empty
-    pile_ids = []
-    for id in ids:
-        try:
-            file = os.path.join(outDir,'consensus',f'{id}.pileup')
-            if not os.path.getsize(file)>0:
-                os.remove(file)
-            else:
-                pile_ids.append(id)
-        except:
-            pass
-    ids = pile_ids
-
-    end = time.time()
-    runtime = round(end - start,2)
-    print(f'\nSniffles finished pileup in {runtime} seconds')
-    start = time.time()
-
-    #command list for generating consensus vcf
-    cmds = []
-    outFiles = []
-    for id in ids:
+    vcf_list = []
+    for path in bam_list:
+        full_path = os.path.abspath(path)
+        file_name = os.path.basename(full_path)
+        path = os.path.dirname(full_path)
+        id = file_name.split(".")[0]
         #run varscan mpileup2cns to generate vcf with consensus information
         minCov = runCFG['snpcalling']['minCoverage']
         quality = runCFG['snpcalling']['snpQualityThreshold']
         freq = runCFG['snpcalling']['consensusFrequency']
-        cmd = f'java -jar {libPath}/varscan/VarScan.v2.3.9.jar mpileup2cns {outDir}/consensus/{id}.pileup --min-coverage {minCov} --min-avg-qual {quality} --min-var-freq {freq} --strand-filter 1 --output-vcf 1'
-        cmds.append(cmd)
-        o = f'{id}.vcf'
-        outFiles.append(o)
+
+        #make multiway pileup using samtools
+        cmd1 = f'bash -c \'samtools mpileup -d 1000000 /infile/{file_name} -f /ref/{reference_sequence_name} -o {id}.pileup && '
+
+        cmd2 = f'java -jar /tools/varscan.jar mpileup2cns {id}.pileup --min-coverage {minCov} --min-avg-qual {quality} --min-var-freq {freq} --strand-filter 1 --output-vcf 1 > {id}.vcf\''
+        cmds.append(cmd1 + cmd2)
+        vcf_list.append(os.path.join(outDir,f'{id}.vcf'))
+
+    #setup multiprocessing
+    pool = mp.Pool(processes=threads)
 
     #start multiprocessing
-    pool.starmap(proc, [[runCFG,cmds[i],'consensus',outFiles[i]] for i in range(len(cmds))])
+    with open(logfile,'a') as outlog:
+        outlog.write('***********\n')
+        outlog.write('Generating Consensus\n')
+        #start multiprocessing
+        results = pool.starmap_async(cd.call,[[cmd,'/outfile',{reference_sequence_dir:"/ref",path:"/infile",outDir:"/outfile"}] for cmd in cmds])
+        stdouts = results.get()
+        for stdout in stdouts:
+            outlog.write('-----------\n')
+            outlog.write(stdout)
+        #denote end of logs
+        outlog.write('***********\n')
 
     #check if vcf file is empty, if it is skip id and remove vcf file
-    vcf_ids = []
-    for id in ids:
+    filtered_vcf_list = []
+    for path in vcf_list:
         try:
-            vcf_file = os.path.join(outDir,'consensus',f'{id}.vcf')
-            if os.path.getsize(vcf_file)>0:
-                empty = True
-                with open(vcf_file,'r') as vcffile:
-                    for line in vcffile:
-                        line = line.strip()
-                        if line and line[0] != '#':
-                            empty = False
-                if empty:
-                    os.remove(vcf_file)
-                else:
-                    vcf_ids.append(id)
+            if os.path.getsize(path)>0:
+                filtered_vcf_list.append(path)
             else:
-                os.remove(vcf_file)
+                os.remove(path)
         except:
             pass
-    ids = vcf_ids
 
     end = time.time()
     runtime = round(end - start,2)
-    print(f'\nSniffles finished generating the VCF in {runtime} seconds')
+    print(f'\nSniffles: Finished generating the consensus vcf in {runtime} seconds')
     start = time.time()
+    print(f'\nSniffles: Generating consensus fasta')
 
     #command list for compressing files
-    zip_cmds = []
-    idx_cmds = []
-    for id in ids:
+    cmds = []
+    out_fasta = []
+    for vcf in filtered_vcf_list:
+        full_path = os.path.abspath(vcf)
+        file_name = os.path.basename(full_path)
+        path = os.path.dirname(full_path)
+        id = file_name.split(".")[0]
         #compress vcf file with bgzip
-        cmd = f'{libPath}/bin/bgzip {id}.vcf'
-        zip_cmds.append(cmd)
-        #index compressed vcf with tabix
-        cmd = f'{libPath}/bin/tabix {id}.vcf.gz'
-        idx_cmds.append(cmd)
+        cmd = f'bash -c \'bgzip {id}.vcf && tabix {id}.vcf.gz && bcftools consensus -f /ref/{reference_sequence_name} {id}.vcf.gz -o {id}.fasta\''
+        out_fasta.append(os.path.join(outDir,f'{id}.fasta'))
+        cmds.append(cmd)
+
     #start multiprocessing
-    pool.starmap(proc, [[runCFG,i,'consensus'] for i in zip_cmds])
-    pool.starmap(proc, [[runCFG,i,'consensus'] for i in idx_cmds])
+    with open(logfile,'a') as outlog:
+        outlog.write('***********\n')
+        outlog.write('Creating consensus Fasta\n')
+        #start multiprocessing
+        results = pool.starmap_async(cd.call,[[cmd,'/outfile',{reference_sequence_dir:"/ref",outDir:"/outfile"}] for cmd in cmds])
+        stdouts = results.get()
+        for stdout in stdouts:
+            outlog.write('-----------\n')
+            outlog.write(stdout)
+        #denote end of logs
+        outlog.write('***********\n')
 
     end = time.time()
     runtime = round(end - start,2)
-    print(f'\nSniffles finished compressing and indexing in {runtime} seconds')
-    start = time.time()
-
-    #command list for generating consensus fasta
-    cmds = []
-    for id in ids:
-        #use bcftools to get consensus fasta
-        cmd = f'{libPath}/bin/bcftools consensus -f {reference} {outDir}/consensus/{id}.vcf.gz -o {outDir}/consensus/{id}.fasta'
-        cmds.append(cmd)
-        #add id as finished on tracking
-        readData.addData('consensus',id,f'{outDir}/consensus/{id}.fasta')
-    #start multiprocessing
-    pool.starmap(proc, [[runCFG,i] for i in cmds])
+    print(f'\nSniffles: Finished generating consensus fasta in {runtime} seconds')
 
     #determine runtime of processes
     end = time.time()
     runtime = round(end - overall_start,2)
-    print(f'\nSniffles finished generating consensus sequence in {runtime} seconds')
-
-    #if mapping reads to consensus is specified run mapping
-    if runCFG['exec']['mapToConsensus']:
-        refs = []
-        for id in ids:
-            refs.append([id,readData.data['consensus'][id]])
-        mapping(readData,runCFG,threads,ids,refs=refs,jobtype='map-consensus')
+    print(f'\nSniffles: Finished generating consensus sequence in {runtime} seconds')
+    return out_fasta
