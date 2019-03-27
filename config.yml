@@ -55,8 +55,8 @@ trimmomatic:
   qscore: 20
 
 snpcalling:
-  lofreq: False
-  varscan: True
+  #program for calling snps (lofreq,varscan)
+  caller: "varscan"
   minCoverage: 100
   snpQualityThreshold: 30
   snpFrequency: 0.01
