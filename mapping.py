@@ -50,8 +50,12 @@ def mapping(runCFG,param_paths,outDir,threads='1'):
 
         #check output folder exists
         checkexists(os.path.join(outDir))
-        #generate command
-        cmd = f"bash -c \'bowtie2 -x {reference_sequence_name} -1 /reads/{read1} -2 /reads/{read2} -p {num_threads} --local | samtools view -bS | samtools sort -o /output/{id}.bam\'"
+        if read2 != '':
+            #generate command for paired end
+            cmd = f"bash -c \'bowtie2 -x {reference_sequence_name} -1 /reads/{read1} -2 /reads/{read2} -p {num_threads} --local | samtools view -bS | samtools sort -o /output/{id}.bam\'"
+        else:
+            #generate command for interleaved
+            cmd = f"bash -c \'bowtie2 -x {reference_sequence_name} --interleaved /reads/{read1} -p {num_threads} --local | samtools view -bS | samtools sort -o /output/{id}.bam\'"
         cmds.append(cmd)
 
         #data for next stage
