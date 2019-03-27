@@ -10,7 +10,7 @@ from shutil import copyfile
 def indexing(runCFG,*paths):
     logfile = os.path.join(runCFG['exec']['outdir'],runCFG['exec']['logfile'])
     outDir = runCFG['exec']['outdir'] + '/ref_sequence'
-    os.mkdir(outDir)
+    checkexists(outDir)
     procTitle('Indexing Reference Genome')
     for path in paths:
         reference_sequence_abspath = os.path.abspath(path)
