@@ -57,7 +57,7 @@ def snpcaller(runCFG,bam_files,threads='1'):
             min_cov=runCFG['snpcalling']['minCoverage']
             snp_qual_threshold=runCFG['snpcalling']['snpQualityThreshold']
 
-            cmd2 = f'java -jar /tools/varscan.jar mpileup2snp {id}_snps.pileup --min-coverage {min_cov} --min-avg-qual {snp_qual_threshold} --min-var-freq {snp_frequency} --strand-filter 1 --output-vcf 1 > {id}_snps.vcf\''
+            cmd2 = f'java -jar /tools/varscan.jar mpileup2cns {id}_snps.pileup --min-coverage {min_cov} --min-avg-qual {snp_qual_threshold} --min-var-freq {snp_frequency} --strand-filter 1 --output-vcf 1 > {id}_snps.vcf\''
 
             #add commands to list for multiprocessing
             cmds.append(cmd1+cmd2)
