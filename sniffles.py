@@ -124,7 +124,7 @@ if cfg['exec']['generateConsensus']:
         indexing(cfg,*fasta_list)
         for id in readData.runtime['trimmed']:
             for fasta in fasta_list:
-                fasta_id = os.path.basename(fasta).split('_')[0]
+                fasta_id = os.path.basename(fasta).split('.')[0]
                 if fasta_id == id:
                     mapping_list.append((id,readData.runtime['trimmed'][id][0],readData.runtime['trimmed'][id][1],os.path.abspath(fasta)))
         mapping(cfg,mapping_list,cfg['exec']['outdir']+'/map_to_consensus',numThreads)
