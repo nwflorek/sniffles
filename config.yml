@@ -4,38 +4,23 @@
 exec:
   outdir: 'sniffle_files'
   logfile: 'sniffle_logs.log'
-  trim: True
-  map: True
   callSNPs: True
   generateConsensus: True
   mapToConsensus: True
-  annotateAAChanges: True
-  denovoAssembly: True
-  denovoAssembleMappedReads: True
-  runPopoolation: True
+  #future feature
+  #annotateAAChanges: True
 
   #data cleaning
   #minimum average depth after inital mapping
   minimumAverageDepth: 100
   #coverage depth normalization with bbnorm and duplicate read removal with picard;
-  #these will be implemented upstream of variant calling, such that variant calling
+  #these are upstream of variant calling, such that variant calling
   #will use the de-duplicated or normalized sam/bam file
   removeDupReads: True
   # using bbnorm from the bbmap software package,
   #normalize coverage across the sam or bam file to a set coverage depth
   normalizeCoverage: True
   coverageNormDepth: 1000
-
-  #Popoolation
-  calcGenewisepi: True
-  calcGenewisepiNpiS: True
-  calcSlidingWindowpiNpiS: True
-
-  #subsampled poppoolation
-  performSubsample: False
-  subsamplepi: False
-  subsamplepiNpiS: False
-  subsampleSlidingWindowpiNpiS: False
 
   #Reference sequence for mapping
   referenceSequence: "A_HongKong_4801_2014_HA.fasta"
@@ -55,19 +40,7 @@ trimmomatic:
   qscore: 20
 
 snpcalling:
-  #program for calling snps (lofreq,varscan)
-  caller: "varscan"
   minCoverage: 100
   snpQualityThreshold: 30
   snpFrequency: 0.01
   consensusFrequency: 0.50
-
-poppoolation:
-  subsampleLevel: 1000
-  minCount: 1
-  minCoverage: 100
-  maxCoverage: 1000000
-  minQuality: 0
-
-  piWindowSize: 9
-  piStepSize: 3
