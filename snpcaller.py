@@ -21,11 +21,7 @@ def snpcaller(runCFG,bam_files,threads='1'):
     #starting time point
     start =  time.time()
     procTitle('SNP Calling')
-    if runCFG['snpcalling']['caller'] == 'lofreq':
-        caller = 'LoFreq'
-    if runCFG['snpcalling']['caller'] == 'varscan':
-        caller = 'VarScan'
-    print(f'\nSniffles: Started calling SNPs using {caller}')
+    print(f'\nSniffles: Started calling SNPs')
 
     bams = []
     sample_list = []
@@ -48,7 +44,7 @@ def snpcaller(runCFG,bam_files,threads='1'):
     cmd2 = 'java -jar /tools/varscan.jar mpileup2cns all.mpileup --min-coverage {min_cov} --min-avg-qual {snp_qual_threshold} --min-var-freq {snp_frequency} --strand-filter 1 --output-vcf 1 --variants --vcf-sample-list <(echo -e "{samples}") > all_snps.vcf\''.format(min_cov=min_cov,snp_qual_threshold=snp_qual_threshold,snp_frequency=snp_frequency,samples='\n'.join(sample_list))
 
     #add commands to list for multiprocessing
-    cmd =cmd1+cmd2)
+    cmd =cmd1+cmd2
 
     #future code block for annotating aa changes
     if runCFG['exec']['annotateAAChanges']:
