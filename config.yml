@@ -1,46 +1,61 @@
 #configureation file for holding runtime configurations and parameters
 
-#Pipeline execution
+# ---Pipeline Execution Parameters---
 exec:
+  #name of the output directory
   outdir: 'sniffle_files'
+  #name of the logfile
   logfile: 'sniffle_logs.log'
-  callSNPs: True
-  generateConsensus: True
-  mapToConsensus: True
-  #future feature
-  #annotateAAChanges: True
-
-  #data cleaning
-  #minimum average depth after inital mapping
+  #reference sequence used for mapping
+  referenceSequence: "A_HongKong_4801_2014_HA.fasta"
+  #minimum average depth after mapping
   minimumAverageDepth: 100
-  #coverage depth normalization with bbnorm and duplicate read removal with picard;
-  #these are upstream of variant calling, such that variant calling
+
+  # ---pipeline processes---
+
+  #variant calling using VarScan
+  callSNPs: True
+  #consensus generation using VarScan
+  generateConsensus: True
+  #map the reads to the consensus sequence using bowtie2
+  mapToConsensus: True
+
+  # ---data cleaning---
+
+  #this occurs before variant calling, such that variant calling
   #will use the de-duplicated or normalized sam/bam file
+
+  #duplicate read removal using picard
+  #remove optical read duplicates
   removeDupReads: True
-  # using bbnorm from the bbmap software package,
+
+  #coverage depth normalization using bbnorm
   #normalize coverage across the sam or bam file to a set coverage depth
   normalizeCoverage: True
   coverageNormDepth: 1000
 
-  #Reference sequence for mapping
-  referenceSequence: "A_HongKong_4801_2014_HA.fasta"
-
-#Trimming
+# ---Quality Trimming Parameters---
 trimmomatic:
+  #remove adapter sequences from the reads
   removeAdapters: False
   #adapter file name included in trimmomatic
   adaptersFileName: "Nextera_XT_adapter.fa"
   #paired end reads
   paired: True
-  #post trimming length
+  #minmial read length
   minlength: 100
-  #sliding window size
+  #sliding window size for quality trim
   windowSize: 5
   #quality threashold for trim in sliding window
   qscore: 20
 
+# ---Single Nucelotide Polymorhpism Calling Parameters---
 snpcalling:
+  #minimum coverage for SNP
   minCoverage: 100
+  #minimum quality for SNP
   snpQualityThreshold: 30
+  #minimum frequency for SNP
   snpFrequency: 0.01
+  #minimum frequency for a consensus SNP in generating the consensus sequence
   consensusFrequency: 0.50
