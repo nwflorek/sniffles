@@ -14,9 +14,8 @@ def snpcaller(runCFG,bam_files,threads='1'):
     checkexists(outDir)
 
     #set reference sequence
-    reference_sequence_abspath = os.path.abspath(runCFG['exec']['referenceSequence'])
-    reference_sequence_name = os.path.basename(reference_sequence_abspath)
-    reference_sequence_dir = os.path.dirname(reference_sequence_abspath)
+    reference_sequence_path = runCFG['exec']['outdir'] + '/ref_sequence'
+    reference_sequence_name = os.path.basename(runCFG['exec']['referenceSequence'])
 
     #starting time point
     start =  time.time()
@@ -47,14 +46,14 @@ def snpcaller(runCFG,bam_files,threads='1'):
     cmd =cmd1+cmd2
 
     #future code block for annotating aa changes
-    if runCFG['exec']['annotateAAChanges']:
-        pass
+    #if runCFG['exec']['annotateAAChanges']:
+        #pass
         #TODO add annotater for annotating aa changes
 
     with open(logfile,'a') as outlog:
         outlog.write('***********\n')
         outlog.write('Calling SNPs\n')
-        results = cd.call(cmd,'/outfile',{reference_sequence_dir:"/ref",path:"/infile",outDir:"/outfile"})
+        results = cd.call(cmd,'/outfile',{reference_sequence_path:"/ref",path:"/infile",outDir:"/outfile"})
         outlog.write('-----------\n')
         outlog.write(results)
         #denote end of logs
