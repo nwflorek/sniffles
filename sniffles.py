@@ -59,7 +59,7 @@ except FileExistsError:
 
 
 #copy reference to outdir
-copyfile(cfg['exec']['referenceSequence'],os.path.join(outDir,cfg['exec']['outdir'])+'/'+cfg['exec']['referenceSequence'])
+copyfile(cfg['exec']['referenceSequence'],cfg['exec']['outdir']+'/'+cfg['exec']['referenceSequence'])
 
 #parse and store read information from input directory
 readData = fp.RunFiles(inDir)
