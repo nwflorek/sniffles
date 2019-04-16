@@ -98,8 +98,6 @@ with open(os.path.join(cfg['exec']['outdir'],'average_depth.log'),'w') as outdep
     bam_list = filtered_bam_list
 print('\nSniffles: Finished determining average read depth')
 
-#datacleaning
-
 #normalize coverage
 if cfg['exec']['normalizeCoverage']:
     fastq_list = rc.normCoverage(cfg,bam_list,numThreads)
@@ -109,10 +107,6 @@ if cfg['exec']['normalizeCoverage']:
         mapping_list.append((id,fastq,'',os.path.abspath(cfg['exec']['referenceSequence'])))
     sc.checkexists(os.path.join(cfg['exec']['outdir']+'/norm_mapping'))
     bam_list = mapping(cfg,mapping_list,cfg['exec']['outdir']+'/norm_mapping',numThreads)
-
-#remove duplicate reads
-if cfg['exec']['removeDupReads']:
-    bam_list = rc.removeDuplicates(cfg,bam_list,numThreads)
 
 #generate consensus
 if cfg['exec']['generateConsensus']:

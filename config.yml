@@ -23,11 +23,7 @@ exec:
   # ---data cleaning---
 
   #this occurs before variant calling, such that variant calling
-  #will use the de-duplicated or normalized sam/bam file
-
-  #duplicate read removal using picard
-  #remove optical read duplicates
-  removeDupReads: True
+  #will use normalized sam/bam file
 
   #coverage depth normalization using bbnorm
   #normalize coverage across the sam or bam file to a set coverage depth
