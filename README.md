@@ -22,13 +22,13 @@ Sniffles is a pipeline for the analysis of influenza genomes. It's a configurabl
 Sniffles uses a configuration file to provide parameters to the pipeline. There is a default configuration file included in the sniffles project. To run the pipeline simple point the `sniffles.py` program at the correct config.yml and directory containing the raw Illumina reads.
 
 ```
-#####
+ #####
 #     #  #    #  #  ######  ######  #       ######   ####
 #        ##   #  #  #       #       #       #       #
-#####   # #  #  #  #####   #####   #       #####    ####
-     #  #  # #  #  #       #       #       #            #
+ #####   # #  #  #  #####   #####   #       #####    ####
+      #  #  # #  #  #       #       #       #            #
 #     #  #   ##  #  #       #       #       #       #    #
-#####   #    #  #  #       #       ######  ######   ####
+ #####   #    #  #  #       #       ######  ######   ####
 
 
 
