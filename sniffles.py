@@ -40,6 +40,9 @@ try:
     outDir = os.path.abspath(args.o)
 except (AttributeError, TypeError) as err:
     outDir = os.getcwd()
+#check if output dir exists if not create it
+sc.checkexists(outDir)
+
 try:
     inDir = os.path.abspath(args.i)
 except (AttributeError, TypeError) as err:
