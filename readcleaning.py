@@ -94,7 +94,7 @@ def normCoverage(runCFG,bam_files,threads='1'):
 
             #run bbnorm
             cov = runCFG['exec']['coverageNormDepth']
-            cmd_normalization = f'/tools/bbmap/bbnorm.sh in=/out_dir/{id}_mapped_1.fastq in2=/out_dir/{id}_mapped_2.fastq out=/out_dir/{id}_norm.fastq target={cov} threads={threads}\''
+            cmd_normalization = f'/tools/bbmap/bbnorm.sh in=/out_dir/{id}_mapped_1.fastq in2=/out_dir/{id}_mapped_2.fastq out=/out_dir/{id}.fastq target={cov} threads={threads}\''
 
             #start docker containers and run
             outlog.write(f'{id}-----------\n')
@@ -102,7 +102,7 @@ def normCoverage(runCFG,bam_files,threads='1'):
             outlog.write(stdout)
             outlog.write(f'-----------\n')
 
-            output_list.append(os.path.join(outDir,f'{id}_norm.fastq'))
+            output_list.append(os.path.join(outDir,f'{id}.fastq'))
 
 
             #cleanup
