@@ -24,7 +24,7 @@ def consensus(runCFG,bam_list,threads='1'):
     #set reference sequence
     reference_sequence_abspath = os.path.abspath(runCFG['exec']['referenceSequence'])
     reference_sequence_name = os.path.basename(reference_sequence_abspath)
-    reference_sequence_dir = os.path.dirname(reference_sequence_abspath)
+    reference_sequence_dir = runCFG['exec']['outdir'] + '/ref_sequence'
 
     #command list
     cmds = []
