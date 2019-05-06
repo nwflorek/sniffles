@@ -10,7 +10,7 @@ LABEL description="influenza snp detection pipeline"
 LABEL website="https://github.com/nwflorek/sniffles"
 
 # Maintainer
-MAINTAINER Nicholas Florek <nicholas.florek@slh.wisc.edu>
+MAINTAINER Kelsey Florek <kelsey.florek@slh.wisc.edu>
 
 #install python
 RUN apt-get update && apt-get install -y software-properties-common &&\
@@ -21,7 +21,7 @@ add-apt-repository -y ppa:openjdk-r/ppa && apt-get update && apt-get install -y 
  openjdk-11-jre\
  zip\
  libz-dev\
- libbz2-dev\ 
+ libbz2-dev\
  liblzma-dev\
  libncurses5-dev
 
