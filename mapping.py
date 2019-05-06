@@ -1,4 +1,4 @@
-import os
+import os, re
 import shlex
 import subprocess as sub
 import multiprocessing as mp
@@ -88,14 +88,57 @@ def mapping(runCFG,param_paths,outDir,threads='1'):
     print(f'\nSniffles: Finished mapping in {runtime} seconds')
     return output_bam_list
 
-def average_depth(file):
-    abs_path = os.path.abspath(file)
-    path = os.path.dirname(abs_path)
-    bam = os.path.basename(abs_path)
+def average_depth(runCFG,bam_list,inDir,outDir):
+    #check that output folder exists
+    checkexists(os.path.join(outDir))
+    #setup inital parameters
+    ref_path = runCFG['exec']['outdir'] + '/ref_sequence'
+    reference_sequence_name = os.path.basename(runCFG['exec']['referenceSequence'])
+    logfile = os.path.join(runCFG['exec']['outdir'],runCFG['exec']['logfile'])
 
-    if '.bam' in bam:
-        cmd = f'bash -c "samtools depth -a {bam} | awk \'{{sum+=$3}} END {{ print sum/NR}}\'"'
-    else:
-        return f'error: {bam} is not a bam file'
-    out = cd.call(cmd,'/data',{path:"/data"})
-    return out.strip()
+    #bam file list that will meet threashold
+    filtered_bam_list = []
+
+    #create logfile that will hold all average depths
+    with open(os.path.join(outDir,'average_depth.log'),'w') as outdepth:
+
+        #loop through each bam
+        for bam in bam_list:
+            filename = os.path.basename(bam)
+            id = filename.split('.')[0]
+            #open the log to log output
+            with open(logfile,'a') as outlog:
+                outlog.write('***********\n')
+                outlog.write('Coverage\n')
+                #generate command for the current bam file
+                cmd = f'bash -c "samtools view /indata/{filename} > {id}.tmp.sam  && /tools/bbmap/pileup.sh in={id}.tmp.sam out={id}_coverage.csv ref=/reference/{reference_sequence_name} && rm {id}.tmp.sam"'
+                #use docker to run the command
+                output = cd.call(cmd,'/outdata',{inDir:"/indata",outDir:"/outdata",ref_path:"/reference"})
+                #record the output in the log
+                outlog.write(output)
+                #denote end of logs
+                outlog.write('***********\n')
+
+            #only add isolates that pass average depth and percent of reference covered
+            percent_cov = 0
+            avg_cov = 0
+            #parse lines of stdout for info we need
+            for line in output.splitlines():
+                if "Percent of reference bases covered:" in line:
+                    match = re.search('[0-9,.]+',line)
+                    if match:
+                        percent_cov = float(match[0])
+
+                if "Average coverage:" in line:
+                    match = re.search('[0-9,.]+',line)
+                    if match:
+                        avg_cov = float(match[0])
+            #check against the config for min thresholds
+            if avg_cov >= runCFG['exec']['minimumAverageDepth'] and percent_cov >= runCFG['exec']['percentRefCovered']:
+                #record
+                outdepth.write(f'{id},{avg_cov},{percent_cov},Pass\n')
+                filtered_bam_list.append(bam)
+            else:
+                outdepth.write(f'{id},{avg_cov},{percent_cov},Fail\n')
+    #return only bam files that meet coverage requirements
+    return filtered_bam_list

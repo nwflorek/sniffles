@@ -85,20 +85,7 @@ bam_list = mapping(cfg,mapping_list,cfg['exec']['outdir']+'/inital_mapping',numT
 
 #determine average depth
 print('\nSniffles: Calculating average read depth in the initial mapping')
-with open(os.path.join(cfg['exec']['outdir'],'average_depth.log'),'w') as outdepth:
-    filtered_bam_list = []
-    for path in bam_list:
-        filename = os.path.basename(path)
-        id = filename.split('.')[0]
-        avgdepth = average_depth(path)
-
-        #only add isolates that pass average depth
-        if float(avgdepth) >= cfg['exec']['minimumAverageDepth']:
-            outdepth.write(f'{id},{avgdepth} : Pass\n')
-            filtered_bam_list.append(path)
-        else:
-            outdepth.write(f'{id},{avgdepth} : Fail\n')
-    bam_list = filtered_bam_list
+bam_list = average_depth(cfg,bam_list,cfg['exec']['outdir']+'/inital_mapping',cfg['exec']['outdir']+'/coverage')
 print('\nSniffles: Finished determining average read depth')
 
 #normalize coverage
