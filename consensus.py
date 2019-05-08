@@ -40,7 +40,7 @@ def consensus(runCFG,bam_list,threads='1'):
         freq = runCFG['snpcalling']['consensusFrequency']
 
         #make multiway pileup using samtools
-        cmd1 = f'bash -c \'samtools mpileup -d 1000000 /infile/{file_name} -f /ref/{reference_sequence_name} -o {id}.pileup && '
+        cmd1 = f'bash -c \'samtools mpileup -ABd 1000000 /infile/{file_name} -f /ref/{reference_sequence_name} -o {id}.pileup && '
 
         cmd2 = f'java -jar /tools/varscan.jar mpileup2cns {id}.pileup --min-coverage {minCov} --min-avg-qual {quality} --min-var-freq {freq} --strand-filter 1 --output-vcf 1 > {id}.vcf\''
         cmds.append(cmd1 + cmd2)

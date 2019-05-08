@@ -33,7 +33,7 @@ def snpcaller(runCFG,bam_files,threads='1'):
         bams.append('/infile/'+file_name)
 
     #generate mpileup
-    cmd1 = 'bash -c \'samtools mpileup -R -d 1000000 {bams} -f /ref/{reference_sequence_name} > all.mpileup &&'.format(bams=' '.join(bams),reference_sequence_name=reference_sequence_name)
+    cmd1 = 'bash -c \'samtools mpileup -ABR -d 1000000 {bams} -f /ref/{reference_sequence_name} > all.mpileup &&'.format(bams=' '.join(bams),reference_sequence_name=reference_sequence_name)
 
     #call snps
     snp_frequency=runCFG['snpcalling']['snpFrequency']
