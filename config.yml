@@ -30,7 +30,7 @@ exec:
   #coverage depth normalization using bbnorm
   #normalize coverage across the sam or bam file to a set coverage depth
   normalizeCoverage: True
-  coverageNormDepth: 1000
+  totalReads: 100000
 
 # ---Quality Trimming Parameters---
 trimmomatic:

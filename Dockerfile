@@ -7,7 +7,7 @@ LABEL version="1"
 LABEL software="sniffles"
 LABEL software.version="1.0"
 LABEL description="influenza snp detection pipeline"
-LABEL website="https://github.com/nwflorek/sniffles"
+LABEL website="https://github.com/k-florek/sniffles"
 
 # Maintainer
 MAINTAINER Kelsey Florek <kelsey.florek@slh.wisc.edu>
@@ -30,6 +30,12 @@ ENV PATH="/tools:${PATH}"
 #install picard and varscan
 RUN mkdir /tools; curl -L 'https://github.com/broadinstitute/picard/releases/download/2.18.27/picard.jar' -o /tools/picard.jar &&\
  curl -L 'https://downloads.sourceforge.net/project/varscan/VarScan.v2.3.9.jar' -o /tools/varscan.jar
+
+#install seqtk
+RUN curl -L 'https://github.com/lh3/seqtk/archive/v1.3.tar.gz' -o v1.3.tar.gz &&\
+ tar -xzf v1.3.tar.gz &&\
+ cd seqtk-1.3 &&\
+ make && make install BINDIR=/usr/bin
 
 #install trimmomatic
 RUN curl -L 'http://www.usadellab.org/cms/uploads/supplementary/Trimmomatic/Trimmomatic-0.38.zip' -o Trimmomatic-0.38.zip &&\
@@ -73,12 +79,5 @@ RUN curl -L 'https://downloads.sourceforge.net/project/bbmap/BBMap_38.43.tar.gz'
  tar -xzf BBMap_38.43.tar.gz &&\
  mv bbmap /tools/bbmap &&\
  rm -r BBMap_38.43.tar.gz
-
-#install lofreq
-RUN curl -L 'https://github.com/CSB5/lofreq/raw/master/dist/lofreq_star-2.1.3.1_linux-x86-64.tgz' -o lofreq_star-2.1.3.1_linux-x86-64.tgz &&\
- tar -xzf lofreq_star-2.1.3.1_linux-x86-64.tgz &&\
- cd lofreq_star-2.1.3.1 && cd bin &&\
- mv * /usr/bin &&\
- rm -r /lofreq_star-2.1.3.1_linux-x86-64.tgz /lofreq_star-2.1.3.1
 
 WORKDIR /data

@@ -92,9 +92,9 @@ def normCoverage(runCFG,bam_files,threads='1'):
             #get reads from mapped bamfile
             cmd_get_reads = f'bash -c \'samtools fastq /bam_files/{id}.bam -1 /out_dir/{id}_mapped_1.fastq -2 /out_dir/{id}_mapped_2.fastq && '
 
-            #run bbnorm
-            cov = runCFG['exec']['coverageNormDepth']
-            cmd_normalization = f'/tools/bbmap/bbnorm.sh in=/out_dir/{id}_mapped_1.fastq in2=/out_dir/{id}_mapped_2.fastq out=/out_dir/{id}.fastq target={cov} threads={threads}\''
+            #run seqtk to subsample reads
+            total_reads = runCFG['exec']['totalReads']
+            cmd_normalization = f'seqtk sample -s100 /out_dir/{id}_mapped_1.fastq {total_reads} > {id}_1.fastq && seqtk sample -s100 /out_dir/{id}_mapped_2.fastq {total_reads} > {id}_2.fastq\''
 
             #start docker containers and run
             outlog.write(f'{id}-----------\n')
@@ -102,7 +102,7 @@ def normCoverage(runCFG,bam_files,threads='1'):
             outlog.write(stdout)
             outlog.write(f'-----------\n')
 
-            output_list.append(os.path.join(outDir,f'{id}.fastq'))
+            output_list.append([os.path.join(outDir,f'{id}_1.fastq'),os.path.join(outDir,f'{id}_2.fastq')])
 
 
             #cleanup

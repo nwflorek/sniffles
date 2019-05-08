@@ -93,8 +93,10 @@ if cfg['exec']['normalizeCoverage']:
     fastq_list = rc.normCoverage(cfg,bam_list,numThreads)
     mapping_list = []
     for fastq in fastq_list:
-        id = os.path.basename(fastq).split('.')[0]
-        mapping_list.append((id,fastq,'',os.path.abspath(cfg['exec']['referenceSequence'])))
+        read1 = fastq[0]
+        read2 = fastq[1]
+        id = os.path.basename(read1).split('_')[0]
+        mapping_list.append((id,read1,read2,os.path.abspath(cfg['exec']['referenceSequence'])))
     sc.checkexists(os.path.join(cfg['exec']['outdir']+'/norm_mapping'))
     bam_list = mapping(cfg,mapping_list,cfg['exec']['outdir']+'/norm_mapping',numThreads)
 
