@@ -1,5 +1,5 @@
 #author: Kelsey Florek
-#email: nicholas.florek@slh.wisc.edu
+#email: kelsey.florek@slh.wisc.edu
 #stripped down docker calling function
 
 import docker
