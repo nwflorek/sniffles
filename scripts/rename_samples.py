@@ -3,6 +3,7 @@
 
 import re
 import os,sys
+from Bio import SeqIO
 
 path = sys.argv[1]
 
@@ -18,9 +19,9 @@ for root,dirs,files in os.walk(path):
 for fasta_file in fasta_files:
     fasta_seq = SeqIO.parse(open(os.path.join(path,fasta_file)),'fasta')
     for fasta in fasta_seq:
-        outname = fasta_file.split('.')[0]
+        outname = fasta_file.split('.')[0]+' '+fasta.id
         fasta.id = outname
-        with open(os.path.join(outdir,outname+'.fasta'),'w') as output_fasta:
+        with open(os.path.join(path,fasta_file),'w') as output_fasta:
             SeqIO.write(fasta,output_fasta,'fasta')
 
 for vcf_file in vcf_files:
